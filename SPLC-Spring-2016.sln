@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Week2", "Week2\Week2.csproj", "{4514565d-f87a-4976-b9b0-8c70fe17e44d}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPLC-Spring-2016", "SPLC-Spring-2016.csproj", "{4514565d-f87a-4976-b9b0-8c70fe17e44d}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
