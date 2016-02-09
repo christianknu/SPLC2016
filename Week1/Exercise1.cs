@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SPLC_Spring_2016
 {
-    class Program
+    class Exercise1
     {
         static void Main()
         {

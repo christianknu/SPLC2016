@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Exercise3
+namespace SPLC_Spring_2016
 {
     class B
     {
