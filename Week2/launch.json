@@ -5,7 +5,7 @@
 			"name": "Launch",
 			"type": "mono",
 			"request": "launch",
-			"program": "Week2/TestTime.exe",
+			"program": "TestTime.exe",
 			"args": [],
 			"cwd": ".",
 			"runtimeExecutable": null,

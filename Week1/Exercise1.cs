@@ -4,6 +4,7 @@ namespace SPLC_Spring_2016
 {
     class Exercise1
     {
+        
         static void Main()
         {
             Console.WriteLine("Hello World!\nTo exit this application just press Enter");
@@ -23,5 +24,6 @@ namespace SPLC_Spring_2016
                 break;
             }
         }
+        
     }
 }

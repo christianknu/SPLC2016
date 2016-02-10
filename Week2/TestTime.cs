@@ -6,7 +6,7 @@ namespace SPLC_Spring_2016
     {
         public static void Main()
         {
-            // Exercise1
+            //############## EXERCISE 1 ##############
             /*
             Time myTime = new Time(13, 54);
 
@@ -27,13 +27,14 @@ namespace SPLC_Spring_2016
             //  My guess to why 't4' is legal, is because the interpreter will see the 't2' and think
             //  'Hey! It's a time!" and say okay, we will add it to something due to the '+'.
             //  As I have made a user-defined conversion operator '+' it will use that, and since that
-            //  requires another Time object, it will create it, using the int 45.
+            //  requires another Time object, it will create it, using the int value of 45. This is
+            //  possible because the constructor of a Time struct, accepts just an integer.
             
             Time t4 = t2 + 45;
             Console.WriteLine("t4 = {0}", t4);
             */
 
-            //Exercise 2.1
+            //############## EXERCISE 2.1 ##############
             /*
             Time t5 = new Time(9, 30);
             Time t6 = t5;
@@ -41,7 +42,7 @@ namespace SPLC_Spring_2016
             Console.WriteLine("t5={0} and t6={1}", t5, t6);
             */
 
-            // Exercise 2.2
+            //############## EXERCISE 2.2 ##############
             Time t1 = new Time(9, 30);
             Time t2 = new Time(9, 30);
             Time t3 = new Time(9, 30);
@@ -97,7 +98,7 @@ namespace SPLC_Spring_2016
 
         public void AddOneHourInstance()
         {
-            minutes += 60;
+            this.minutes += 60;
         }
     }
 
@@ -105,7 +106,7 @@ namespace SPLC_Spring_2016
     {
         public static void AddOneHour(Time t)
         {
-            t.minutes = t.minutes + 60;
+            t.minutes += 60;
         }
         public static void AddOneHourByRef(ref Time t)
         {
