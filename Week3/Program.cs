@@ -8,7 +8,7 @@ namespace Week3
         {
             // Exercise 1
             Console.WriteLine("Exercise 1:");
-            IntAction a = (x) => TestDelegate.PrintInt(x);
+            IntAction a = x => TestDelegate.PrintInt(x);
             a(42);
             int[] arr = {3, 4, 14, 53, 54, 89, 11};
             TestDelegate.Perform(a, arr);
@@ -37,7 +37,7 @@ namespace Week3
             
             foreach (var book in myBooks)
             {
-                Console.WriteLine(book.ToString());
+                Console.WriteLine(book);
             }
             
             foreach(var bookTitle in bookTitles){

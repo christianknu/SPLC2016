@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Week3
 {
 	struct Book
@@ -15,10 +13,10 @@ namespace Week3
 	}
 	
 	public delegate int DComparer<T>(T v1, T v2);
-    public delegate bool Func<T,boolean>(T myT);
+    public delegate bool Func<T,TBoolean>(T myT);
     public delegate U Map<T,U>(T myT);
 	
-	class GenericMethods {
+	static class GenericMethods {
 	  	private static void Qsort<T>(T[] arr, DComparer<T> cmp, int a, int b) {
     		if (a < b) { 
       			int i = a, j = b;
@@ -46,7 +44,7 @@ namespace Week3
             
             foreach(var element in arr)
                 if(p(element)) { arrayLength++; }
-            T[] returnArr = new T[arrayLength];
+            var returnArr = new T[arrayLength];
             
             for(int i = 0; i < arr.Length; i++) {
                 if(p(arr[i])) {
@@ -58,7 +56,7 @@ namespace Week3
         }
         
         public static U[] Map<T,U>(T[] arr, Map<T,U> f) {
-             U[] returnArr = new U[arr.Length];
+             var returnArr = new U[arr.Length];
              for(int i = 0; i < arr.Length; i++) {
                  returnArr[i] = f(arr[i]);
              }
