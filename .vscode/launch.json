@@ -2,11 +2,22 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "Debug",
-			"type": "gdb",
+			"name": "Launch",
+			"type": "mono",
 			"request": "launch",
-			"target": "/Week3/bin/Debug/dnxcore50",
-			"cwd": "${workspaceRoot}"
+			"program": "${workspaceRoot}/Week4/Program.exe",
+			"args": [],
+			"cwd": "${workspaceRoot}",
+			"runtimeExecutable": null,
+			"env": {},
+			"externalConsole": false
+		},
+		{
+			"name": "Attach",
+			"type": "mono",
+			"request": "attach",
+			"address": "localhost",
+			"port": 5858
 		}
 	]
 }

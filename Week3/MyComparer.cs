@@ -1,5 +1,3 @@
-using System;
-
 namespace Week3
 {
     class MyComparer
