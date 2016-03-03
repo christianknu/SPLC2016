@@ -7,7 +7,12 @@ namespace Week4
 
     class Program
     {
-        public static void Main()
+        public static void Main() {
+            //ProgramMain();
+            Generics.GenericsMain();
+        }
+        
+        public static void ProgramMain()
         {
             // Exercise 1.1
             Console.WriteLine("Exercise 1.1:");
