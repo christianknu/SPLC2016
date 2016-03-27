@@ -1,0 +1,53 @@
+/* Coco/R lexer and parser specification for arithmetic expressions. */
+/* 2006-09-14 */
+
+/* Build with:
+ *   Coco.exe -namespace Expressions Ex2.ATG
+ */
+
+using System.Collections.Generic;
+
+COMPILER Expressions
+  public int res;
+
+/*--------------------------------------------------------------------------*/
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit = "0123456789".
+  cr  = '\r'.
+  lf  = '\n'.
+  tab = '\t'.
+
+TOKENS
+  ident  = letter {letter | digit}.
+  number = digit {digit}.
+
+IGNORE cr + lf + tab
+
+PRODUCTIONS
+
+/*------------------------------------------------------------------------*/
+Expr<out int n>   (. int n1, n2; .)
+= MyTerm<out n1>  (. n = n1; .)
+{
+  "==" MyTerm<out n2> (. n = (n1 == n2) ? 1 : 0; .)
+}
+.
+MyTerm<out int n> (. int n1, n2; .)
+= Term<out n1> (. n = n1; .)
+{
+  '+' Term<out n2>  (. n = n+n2; .)  
+  | 
+  '-' Term<out n2>  (. n = n-n2; .)    
+}
+.
+Term<out int n> 
+= number          (. n = Convert.ToInt32(t.val); .)
+{
+  '*' number  (. n = n*Convert.ToInt32(t.val); .) 
+}
+.
+Expressions                        (. int n; .)
+= Expr<out n>                (. res = n; .)
+.
+END Expressions.
