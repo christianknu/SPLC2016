@@ -27,9 +27,9 @@ IGNORE cr + lf + tab
 PRODUCTIONS
 
 /*------------------------------------------------------------------------*/
-Expr<out int n>   (. int n1, n2; .)
-= "if" TermF<out n1> (. n = n1; .)
-| 
+Expr<out int n>   (. int n1, n2, n3, n4; n= 0;.)
+= "if" TermF<out n1> (. n = n1; .) "then" TermF<out n2> "else" TermF<out n3> 
+|
 .
 
 
@@ -64,16 +64,16 @@ TermH<out int n> (. int n1, n2; .)
 TermI<out int n> (. int n1, n2; .)
 = TermJ<out n1> (. n = n1; .)
 {
-  '+' TermJ<out n2>  (. n = n+n2; .)  
-  | 
-  '-' TermJ<out n2>  (. n = n-n2; .)    
+  '+' TermJ<out n2>  (. n = n+n2; .)
+  |
+  '-' TermJ<out n2>  (. n = n-n2; .)
 }
 .
 
-TermJ<out int n> 
+TermJ<out int n>
 = number          (. n = Convert.ToInt32(t.val); .)
 {
-  '*' number  (. n = n*Convert.ToInt32(t.val); .) 
+  '*' number  (. n = n*Convert.ToInt32(t.val); .)
 }
 .
 

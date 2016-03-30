@@ -29,28 +29,28 @@ PRODUCTIONS
 /*------------------------------------------------------------------------*/
 Expr<out int n>   (. int n1, n2; .)
 = TermA<out n1>  (. n = n1; .)
-(
+[
   "==" TermA<out n2> (. n = (n1 == n2) ? 1 : 0; Console.WriteLine("== used");.)
   |
   '<' TermA<out n2> (. n = (n1 < n2) ? 1 : 0; Console.WriteLine("< used"); .)
   |
   '>' TermA<out n2> (. n = (n1 > n2) ? 1 : 0; Console.WriteLine("> used"); .)
-)
+]
 .
 
 TermA<out int n> (. int n1, n2; .)
 = TermB<out n1> (. n = n1; .)
 {
-  '+' TermB<out n2>  (. n = n+n2; .)  
-  | 
-  '-' TermB<out n2>  (. n = n-n2; .)    
+  '+' TermB<out n2>  (. n = n+n2; .)
+  |
+  '-' TermB<out n2>  (. n = n-n2; .)
 }
 .
 
-TermB<out int n> 
+TermB<out int n>
 = number          (. n = Convert.ToInt32(t.val); .)
 {
-  '*' number  (. n = n*Convert.ToInt32(t.val); .) 
+  '*' number  (. n = n*Convert.ToInt32(t.val); .)
 }
 .
 
