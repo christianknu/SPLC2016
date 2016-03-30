@@ -198,33 +198,33 @@ namespace Expressions {
             int v2 = e2.Eval(env, fEnv);
             switch (op) {
                 case Operator.Add:
-                return v1 + v2;
+                    return v1 + v2;
                 case Operator.Div:
-                return v1 / v2;
+                    return v1 / v2;
                 case Operator.Mul:
-                return v1 * v2;
+                    return v1 * v2;
                 case Operator.Sub:
-                return v1 - v2;
+                    return v1 - v2;
                 case Operator.Eq:
-                return v1 == v2 ? 1 : 0;
+                    return v1 == v2 ? 1 : 0;
                 case Operator.Ne:
-                return v1 != v2 ? 1 : 0;
+                    return v1 != v2 ? 1 : 0;
                 case Operator.Lt:
-                return v1 < v2 ? 1 : 0;
+                    return v1 < v2 ? 1 : 0;
                 case Operator.Le:
-                return v1 <= v2 ? 1 : 0;
+                    return v1 <= v2 ? 1 : 0;
                 case Operator.Gt:
-                return v1 > v2 ? 1 : 0;
+                    return v1 > v2 ? 1 : 0;
                 case Operator.Ge:
-                return v1 >= v2 ? 1 : 0;
+                    return v1 >= v2 ? 1 : 0;
                 case Operator.And:
-                return v1 == 0 ? 0 : v2;
+                    return v1 == 0 ? 0 : v2;
                 case Operator.Or:
-                return v1 == 0 ? v2 : 1;
+                    return v1 == 0 ? v2 : 1;
                 case Operator.Mod:
-                return v1 % v2;
+                    return v1 % v2;
                 default:
-                throw new Exception("Unknown binary operator: " + op);
+                    throw new Exception("Unknown binary operator: " + op);
             }
         }
 
@@ -236,31 +236,31 @@ namespace Expressions {
                 case Operator.Div:
                 case Operator.Mul:
                 case Operator.Sub:
-                if (t1 == Type.intType && t2 == Type.intType)
-                return Type.intType;
-                else
-                throw new TypeException("Arguments to + - * / must be int");
+                    if (t1 == Type.intType && t2 == Type.intType)
+                        return Type.intType;
+                    else
+                        throw new TypeException("Arguments to + - * / must be int");
                 case Operator.Eq:
                 case Operator.Ge:
                 case Operator.Gt:
                 case Operator.Le:
                 case Operator.Lt:
                 case Operator.Ne:
-                if (t1 == Type.intType && t2 == Type.intType)
-                return Type.boolType;
-                else
-                throw new TypeException("Arguments to == >= > <= < != must be int");
+                    if (t1 == Type.intType && t2 == Type.intType)
+                        return Type.boolType;
+                    else
+                        throw new TypeException("Arguments to == >= > <= < != must be int");
                 case Operator.Or:
                 case Operator.And:
-                if (t1 == Type.boolType && t2 == Type.boolType)
-                return Type.boolType;
-                else
-                throw new TypeException("Arguments to & must be bool");
+                    if (t1 == Type.boolType && t2 == Type.boolType)
+                        return Type.boolType;
+                    else
+                        throw new TypeException("Arguments to & must be bool");
                 case Operator.Mod:
-                if (t1 == Type.intType && t2 == Type.intType)
-                return Type.intType;
-                else
-                throw new TypeException("Arguments to % must be int");
+                    if (t1 == Type.intType && t2 == Type.intType)
+                        return Type.intType;
+                    else
+                        throw new TypeException("Arguments to % must be int");
                 default:
                 throw new Exception("Unknown binary operator: " + op);
             }
@@ -272,53 +272,98 @@ namespace Expressions {
             e2.Compile(env, gen);
             switch (op) {
                 case Operator.Add:
-                gen.Emit(Instruction.ADD);
-                break;
+                    gen.Emit(Instruction.ADD);
+                    break;
                 case Operator.Div:
-                gen.Emit(Instruction.DIV);
-                break;
+                    gen.Emit(Instruction.DIV);
+                    break;
                 case Operator.Mul:
-                gen.Emit(Instruction.MUL);
-                break;
+                    gen.Emit(Instruction.MUL);
+                    break;
                 case Operator.Sub:
-                gen.Emit(Instruction.SUB);
-                break;
+                    gen.Emit(Instruction.SUB);
+                    break;
                 case Operator.Eq:
-                gen.Emit(Instruction.EQ);
-                break;
+                    gen.Emit(Instruction.EQ);
+                    break;
                 case Operator.Ne:
-                gen.Emit(Instruction.EQ);
-                gen.Emit(Instruction.NOT);
-                break;
+                    gen.Emit(Instruction.EQ);
+                    gen.Emit(Instruction.NOT);
+                    break;
                 case Operator.Ge:
-                gen.Emit(Instruction.LT);
-                gen.Emit(Instruction.NOT);
-                break;
+                    gen.Emit(Instruction.LT);
+                    gen.Emit(Instruction.NOT);
+                    break;
                 case Operator.Gt:
-                gen.Emit(Instruction.SWAP);
-                gen.Emit(Instruction.LT);
-                break;
+                    gen.Emit(Instruction.SWAP);
+                    gen.Emit(Instruction.LT);
+                    break;
                 case Operator.Le:
-                gen.Emit(Instruction.SWAP);
-                gen.Emit(Instruction.LT);
-                gen.Emit(Instruction.NOT);
-                break;
+                    gen.Emit(Instruction.SWAP);
+                    gen.Emit(Instruction.LT);
+                    gen.Emit(Instruction.NOT);
+                    break;
                 case Operator.Lt:
-                gen.Emit(Instruction.LT);
-                break;
+                    gen.Emit(Instruction.LT);
+                    break;
                 case Operator.And:
-                gen.Emit(Instruction.MUL);
-                break;
+                    gen.Emit(Instruction.MUL);
+                    break;
                 case Operator.Or:
-                gen.Emit(Instruction.ADD);
-                gen.Emit(new CSTI(0));
-                gen.Emit(Instruction.EQ);
-                gen.Emit(Instruction.NOT);
-                break;
+                    gen.Emit(Instruction.ADD);
+                    gen.Emit(new CSTI(0));
+                    gen.Emit(Instruction.EQ);
+                    gen.Emit(Instruction.NOT);
+                    break;
                 default:
-                throw new Exception("Unknown binary operator: " + op);
+                    throw new Exception("Unknown binary operator: " + op);
             }
             env.PopTemporary();
+        }
+    }
+
+    public class IfElseExpression : Expression {
+        private readonly Expression cond, e2, e3;
+
+        public IfElseExpression(Expression cond, Expression e2, Expression e3) {
+            this.cond = cond;
+            this.e2 = e2;
+            this.e3 = e3;
+        }
+
+        public override int Eval(REnv env, FEnv fEnv) {
+            bool conditionRes = cond.Eval(env, fEnv);
+            int v2 = e2.Eval(env, fEnv);
+            int v3 = e3.Eval(env, fEnv);
+            switch (conditionRes) {
+                case true:
+                    v2;
+                    break;
+                case false:
+                    v3;
+                    break;
+                default:
+                    throw new Exception("Arguments after 'if' must return a bool: " + conditionRes);
+            }
+        }
+
+        public override Type Check(TEnv env, FEnv fEnv) {
+            Type t1 = cond.Check(env, fEnv);
+            Type t2 = e2.Check(env, fEnv);
+            Type t3 = e3.Check(env, fEnv);
+            switch (t1) {
+                case Type.boolType:
+                    if(t2.Type == Type.intType && t3.Type == Type.intType)
+                        return Type.boolType;
+                    else
+                        throw new TypeException("Condition must return bool and expressions must return int.");
+                default:
+                    throw new Exception("Unknown type: " + t1);
+            }
+        }
+
+        public override void Compile(CEnv env, Generator gen) {
+            throw new NotSupportedException("This functionality will be provided at a later moment.");
         }
     }
 
@@ -335,11 +380,11 @@ namespace Expressions {
             int v1 = e1.Eval(env, fEnv);
             switch (op) {
                 case Operator.Not:
-                return v1 == 0 ? 1 : 0;
+                    return v1 == 0 ? 1 : 0;
                 case Operator.Neg:
-                return -v1;
+                    return -v1;
                 default:
-                throw new Exception("Unknown unary operator: " + op);
+                    throw new Exception("Unknown unary operator: " + op);
             }
         }
 
@@ -347,17 +392,17 @@ namespace Expressions {
             Type t1 = e1.Check(env, fEnv);
             switch (op) {
                 case Operator.Neg:
-                if (t1 == Type.intType)
-                return Type.intType;
-                else
-                throw new TypeException("Argument to - must be int");
+                    if (t1 == Type.intType)
+                        return Type.intType;
+                    else
+                        throw new TypeException("Argument to - must be int");
                 case Operator.Not:
-                if (t1 == Type.boolType)
-                return Type.boolType;
-                else
-                throw new TypeException("Argument to ! must be bool");
+                        if (t1 == Type.boolType)
+                    return Type.boolType;
+                        else
+                    throw new TypeException("Argument to ! must be bool");
                 default:
-                throw new Exception("Unknown unary operator: " + op);
+                    throw new Exception("Unknown unary operator: " + op);
             }
         }
 
@@ -365,15 +410,15 @@ namespace Expressions {
             e1.Compile(env, gen);
             switch (op) {
                 case Operator.Not:
-                gen.Emit(Instruction.NOT);
-                break;
+                    gen.Emit(Instruction.NOT);
+                    break;
                 case Operator.Neg:
-                gen.Emit(new CSTI(0));
-                gen.Emit(Instruction.SWAP);
-                gen.Emit(Instruction.SUB);
-                break;
+                    gen.Emit(new CSTI(0));
+                    gen.Emit(Instruction.SWAP);
+                    gen.Emit(Instruction.SUB);
+                    break;
                 default:
-                throw new Exception("Unknown unary operator: " + op);
+                    throw new Exception("Unknown unary operator: " + op);
             }
         }
     }
@@ -393,9 +438,9 @@ namespace Expressions {
             Type argType = arg.Check(env,fenv);
             FuncDef fDef = fenv.getFunction(fName);
             if (fDef.CheckArgType(argType))
-            return fDef.returnType;
+                return fDef.returnType;
             else
-            throw new TypeException("Type error in call of function " + fName);
+                    throw new TypeException("Type error in call of function " + fName);
         }
 
         public override int Eval(REnv env, FEnv fenv) {

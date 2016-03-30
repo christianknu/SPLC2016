@@ -54,6 +54,8 @@ Expr<out Expression e>     (. Expression e1, e2; Operator op; e = null; .)
   { AndOp<out op>
     BoolTerm<out e2>        (. e = new BinOp(op, e, e2); .)
   }
+  |
+  IfElseExpre<out e>
 .
 
 AndOp<out Operator op>  (. op = Operator.Bad; .)
@@ -87,6 +89,16 @@ SimExpr<out Expression e>  (. Expression e1, e2; Operator op; .)
   { (AddOp<out op> | ModOp<out op>)
     Term<out e2>           (. e = new BinOp(op, e, e2); .)
 	}
+.
+
+/*------------------------------------------------------------------------*/
+IfElseExpre<out Expression e> (. Expression e1, e2, e3; e = null; .)
+= (
+    "if" BoolTerm<out e1>
+    "then" Expr<out e2>
+    "else" Expr<out e3>
+                           (. e = new IfElseExpre(e1, e2, e3) .)
+)
 .
 
 /*------------------------------------------------------------------------*/
