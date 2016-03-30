@@ -1,0 +1,147 @@
+/* Coco/R lexer and parser specification for arithmetic expressions. */
+/* 2006-09-14 */
+
+/* Build with:
+ *   Coco.exe -namespace Expressions Expressions.ATG
+ */
+
+using System.Collections.Generic;
+
+COMPILER Expressions
+  public Program program;
+
+/*--------------------------------------------------------------------------*/
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit = "0123456789".
+  cr  = '\r'.
+  lf  = '\n'.
+  tab = '\t'.
+
+TOKENS
+  ident  = letter {letter | digit}.
+  number = digit {digit}.
+
+IGNORE cr + lf + tab
+
+PRODUCTIONS
+
+/*------------------------------------------------------------------------*/
+Program<out Program p>     (. p = null; FuncDef f = null; String name = null; Expression e = null;
+                                   Dictionary<String,FuncDef> functions = new Dictionary<string, FuncDef>(); .)
+= {
+	FuncDef<out f, out name>  (. functions.Add(name, f); .)
+   }
+   Expr<out e> (. p = new Program(functions, e); .)
+.
+
+FuncDef<out FuncDef f, out String name> (. f = null; String an = null; Expression e = null;
+                                                                               Type at = null; Type rt = null;.)
+= TypeExpr<out rt> Ident<out name> '(' 
+       TypeExpr<out at> Ident<out an> ')' '=' 
+       Expr<out e>  ';'                                           (. f = new FuncDef(rt, name, at, an, e); .)
+.
+
+TypeExpr<out Type t>  (. t = null; .)
+= "int"    (. t = Type.intType; .)
+| "bool"  (. t = Type.boolType; .)
+.
+
+
+/*------------------------------------------------------------------------*/
+Expr<out Expression e>     (. Expression e1, e2; Operator op; e = null; .)
+= BoolTerm<out e1>          (. e = e1; .)
+  { AndOp<out op>        
+    BoolTerm<out e2>        (. e = new BinOp(op, e, e2); .)
+  }
+.
+
+AndOp<out Operator op>  (. op = Operator.Bad; .)
+= '&'    (. op = Operator.And; .)
+.
+
+/*------------------------------------------------------------------------*/
+
+BoolTerm<out Expression e>     (. Expression e1, e2; Operator op; e = null; .)
+= SimBoolExpr<out e1>          (. e = e1; .)
+  { OrOp<out op>        
+    SimBoolExpr<out e2>        (. e = new BinOp(op, e, e2); .)
+  }
+.
+
+OrOp<out Operator op>  (. op = Operator.Bad; .)
+= '|'    (. op = Operator.Or; .)
+.
+
+/*------------------------------------------------------------------------*/
+SimBoolExpr<out Expression e>     (. Expression e1, e2; Operator op; e = null; .)
+= SimExpr<out e1>          (. e = e1; .)
+  [ RelOp<out op>        
+    SimExpr<out e2>        (. e = new BinOp(op, e, e2); .)
+  ]
+.
+
+/*------------------------------------------------------------------------*/
+SimExpr<out Expression e>  (. Expression e1, e2; Operator op; .)
+= Term<out e1>             (. e = e1; .)
+  { AddOp<out op>
+    Term<out e2>           (. e = new BinOp(op, e, e2); .)
+	}
+.
+
+/*------------------------------------------------------------------------*/
+RelOp<out Operator op>     (. op = Operator.Bad; .)
+= ( "=="                   (. op = Operator.Eq;  .)
+  | "!="                   (. op = Operator.Ne;  .)
+  | "<"                    (. op = Operator.Lt;  .)
+  | "<="                   (. op = Operator.Le;  .)
+  | ">"                    (. op = Operator.Gt;  .)
+  | ">="                   (. op = Operator.Ge;  .)
+  )
+.
+
+/*------------------------------------------------------------------------*/
+Term<out Expression e>     (. Operator op; Expression e1, e2; .)
+= Factor<out e1>           (. e = e1;                         .)
+  { MulOp<out op>
+    Factor<out e2>         (. e = new BinOp(op, e, e2);       .)
+	}
+.
+
+/*------------------------------------------------------------------------*/
+AddOp<out Operator op>     (. op = Operator.Bad; .)
+= ( '+'                    (. op = Operator.Add; .)
+  | '-'                    (. op = Operator.Sub; .)
+  )
+.
+
+/*------------------------------------------------------------------------*/
+Factor<out Expression e>   (. String name; Expression e1; e = null; .)
+= ( Ident<out name>             (. e = new Variable(name); .)
+     [ 
+        '(' Expr<out e1> ')' (. e = new FuncCall(name, e1); .)
+     ]
+  | number                 (. e = new Constant(Convert.ToInt32(t.val), 
+                                               Type.intType); .)
+  | '-' Factor<out e1>     (. e = new UnOp(Operator.Neg, e1); .)
+  | '(' Expr<out e1> ')'   (. e = e1; .)
+  )
+.
+
+/*------------------------------------------------------------------------*/
+MulOp<out Operator op>     (. op = Operator.Bad; .) 
+= ( '*'                    (. op = Operator.Mul; .)
+  | '/'                    (. op = Operator.Div; .)
+  )
+.
+
+/*------------------------------------------------------------------------*/
+Ident<out String name>
+= ident                    (. name = t.val; .)
+.
+
+/*------------------------------------------------------------------------*/
+Expressions                (. Program p; .)
+= Program<out p>              (. program = p; .)
+.
+END Expressions.
