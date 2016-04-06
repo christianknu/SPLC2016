@@ -325,23 +325,19 @@ namespace Expressions {
     public class IfElseExpression : Expression {
         private readonly Expression cond, e2, e3;
 
-        public IfElseExpression(Expression cond, Expression e2, Expression e3) {
+        public IfElseExpression(BinOp cond, Expression e2, Expression e3) {
             this.cond = cond;
             this.e2 = e2;
             this.e3 = e3;
         }
 
         public override int Eval(REnv env, FEnv fEnv) {
-            bool conditionRes = cond.Eval(env, fEnv);
-            int v2 = e2.Eval(env, fEnv);
-            int v3 = e3.Eval(env, fEnv);
+            int conditionRes = cond.Eval(env, fEnv);
             switch (conditionRes) {
-                case true:
-                    v2;
-                    break;
-                case false:
-                    v3;
-                    break;
+                case 1:
+                    return e2.Eval(env, fEnv);
+                case 0:
+                    return e3.Eval(env, fEnv);
                 default:
                     throw new Exception("Arguments after 'if' must return a bool: " + conditionRes);
             }
@@ -351,14 +347,10 @@ namespace Expressions {
             Type t1 = cond.Check(env, fEnv);
             Type t2 = e2.Check(env, fEnv);
             Type t3 = e3.Check(env, fEnv);
-            switch (t1) {
-                case Type.boolType:
-                    if(t2.Type == Type.intType && t3.Type == Type.intType)
-                        return Type.boolType;
-                    else
-                        throw new TypeException("Condition must return bool and expressions must return int.");
-                default:
-                    throw new Exception("Unknown type: " + t1);
+            if(t1 == Type.intType && t2.Type == Type.intType && t3.Type == Type.intType) {
+                return Type.intType;
+            } else {
+                throw new TypeException("Condition must return bool and expressions must return int.");
             }
         }
 

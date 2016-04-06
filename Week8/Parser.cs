@@ -17,7 +17,7 @@ public class Parser {
 	const bool T = true;
 	const bool x = false;
 	const int minErrDist = 2;
-
+	
 	public Scanner scanner;
 	public Errors  errors;
 
@@ -44,7 +44,7 @@ public Program program;
 		if (errDist >= minErrDist) errors.SemErr(t.line, t.col, msg);
 		errDist = 0;
 	}
-
+	
 	void Get () {
 		for (;;) {
 			t = la;
@@ -54,15 +54,15 @@ public Program program;
 			la = t;
 		}
 	}
-
+	
 	void Expect (int n) {
 		if (la.kind==n) Get(); else { SynErr(n); }
 	}
-
+	
 	bool StartOf (int s) {
 		return set[s, la.kind];
 	}
-
+	
 	void ExpectWeak (int n, int follow) {
 		if (la.kind == n) Get();
 		else {
@@ -86,16 +86,16 @@ public Program program;
 		}
 	}
 
-
+	
 	void Program(out Program p) {
 		p = null; FuncDef f = null; String name = null; Expression e = null;
-		    Dictionary<String,FuncDef> functions = new Dictionary<string, FuncDef>();
+		    Dictionary<String,FuncDef> functions = new Dictionary<string, FuncDef>(); 
 		while (la.kind == 7 || la.kind == 8) {
 			FuncDef(out f, out name);
-			functions.Add(name, f);
+			functions.Add(name, f); 
 		}
 		Expr(out e);
-		p = new Program(functions, e);
+		p = new Program(functions, e); 
 	}
 
 	void FuncDef(out FuncDef f, out String name) {
@@ -110,18 +110,18 @@ public Program program;
 		Expect(5);
 		Expr(out e);
 		Expect(6);
-		f = new FuncDef(rt, name, at, an, e);
+		f = new FuncDef(rt, name, at, an, e); 
 	}
 
 	void Expr(out Expression e) {
-		Expression e1, e2; Operator op; e = null;
+		Expression e1, e2; Operator op; e = null; 
 		if (StartOf(1)) {
 			BoolTerm(out e1);
-			e = e1;
+			e = e1; 
 			while (la.kind == 9) {
 				AndOp(out op);
 				BoolTerm(out e2);
-				e = new BinOp(op, e, e2);
+				e = new BinOp(op, e, e2); 
 			}
 		} else if (la.kind == 11) {
 			IfElseExpre(out e);
@@ -129,70 +129,70 @@ public Program program;
 	}
 
 	void TypeExpr(out Type t) {
-		t = null;
+		t = null; 
 		if (la.kind == 7) {
 			Get();
-			t = Type.intType;
+			t = Type.intType; 
 		} else if (la.kind == 8) {
 			Get();
-			t = Type.boolType;
+			t = Type.boolType; 
 		} else SynErr(27);
 	}
 
 	void Ident(out String name) {
 		Expect(1);
-		name = t.val;
+		name = t.val; 
 	}
 
 	void BoolTerm(out Expression e) {
-		Expression e1, e2; Operator op; e = null;
+		Expression e1, e2; Operator op; e = null; 
 		SimBoolExpr(out e1);
-		e = e1;
+		e = e1; 
 		while (la.kind == 10) {
 			OrOp(out op);
 			SimBoolExpr(out e2);
-			e = new BinOp(op, e, e2);
+			e = new BinOp(op, e, e2); 
 		}
 	}
 
 	void AndOp(out Operator op) {
-		op = Operator.Bad;
+		op = Operator.Bad; 
 		Expect(9);
-		op = Operator.And;
+		op = Operator.And; 
 	}
 
 	void IfElseExpre(out Expression e) {
-		Expression e1, e2, e3; e = null;
+		Expression e1, e2, e3; e = null; 
 		Expect(11);
 		BoolTerm(out e1);
 		Expect(12);
 		Expr(out e2);
 		Expect(13);
 		Expr(out e3);
-		e = new IfElseExpre(e1, e2, e3);
+		e = new IfElseExpre(e1, e2, e3); 
 	}
 
 	void SimBoolExpr(out Expression e) {
-		Expression e1, e2; Operator op; e = null;
+		Expression e1, e2; Operator op; e = null; 
 		SimExpr(out e1);
-		e = e1;
+		e = e1; 
 		if (StartOf(2)) {
 			RelOp(out op);
 			SimExpr(out e2);
-			e = new BinOp(op, e, e2);
+			e = new BinOp(op, e, e2); 
 		}
 	}
 
 	void OrOp(out Operator op) {
-		op = Operator.Bad;
+		op = Operator.Bad; 
 		Expect(10);
-		op = Operator.Or;
+		op = Operator.Or; 
 	}
 
 	void SimExpr(out Expression e) {
-		Expression e1, e2; Operator op;
+		Expression e1, e2; Operator op; 
 		Term(out e1);
-		e = e1;
+		e = e1; 
 		while (la.kind == 20 || la.kind == 21 || la.kind == 22) {
 			if (la.kind == 20 || la.kind == 21) {
 				AddOp(out op);
@@ -200,41 +200,41 @@ public Program program;
 				ModOp(out op);
 			}
 			Term(out e2);
-			e = new BinOp(op, e, e2);
+			e = new BinOp(op, e, e2); 
 		}
 	}
 
 	void RelOp(out Operator op) {
-		op = Operator.Bad;
+		op = Operator.Bad; 
 		switch (la.kind) {
 		case 14: {
 			Get();
-			op = Operator.Eq;
+			op = Operator.Eq;  
 			break;
 		}
 		case 15: {
 			Get();
-			op = Operator.Ne;
+			op = Operator.Ne;  
 			break;
 		}
 		case 16: {
 			Get();
-			op = Operator.Lt;
+			op = Operator.Lt;  
 			break;
 		}
 		case 17: {
 			Get();
-			op = Operator.Le;
+			op = Operator.Le;  
 			break;
 		}
 		case 18: {
 			Get();
-			op = Operator.Gt;
+			op = Operator.Gt;  
 			break;
 		}
 		case 19: {
 			Get();
-			op = Operator.Ge;
+			op = Operator.Ge;  
 			break;
 		}
 		default: SynErr(28); break;
@@ -242,88 +242,88 @@ public Program program;
 	}
 
 	void Term(out Expression e) {
-		Operator op; Expression e1, e2;
+		Operator op; Expression e1, e2; 
 		Factor(out e1);
-		e = e1;
+		e = e1;                         
 		while (la.kind == 23 || la.kind == 24) {
 			MulOp(out op);
 			Factor(out e2);
-			e = new BinOp(op, e, e2);
+			e = new BinOp(op, e, e2);       
 		}
 	}
 
 	void AddOp(out Operator op) {
-		op = Operator.Bad;
+		op = Operator.Bad; 
 		if (la.kind == 20) {
 			Get();
-			op = Operator.Add;
+			op = Operator.Add; 
 		} else if (la.kind == 21) {
 			Get();
-			op = Operator.Sub;
+			op = Operator.Sub; 
 		} else SynErr(29);
 	}
 
 	void ModOp(out Operator op) {
-		op = Operator.Bad;
+		op = Operator.Bad; 
 		Expect(22);
-		op = Operator.Mod;
+		op = Operator.Mod; 
 	}
 
 	void Factor(out Expression e) {
-		String name; Expression e1; e = null;
+		String name; Expression e1; e = null; 
 		if (la.kind == 1) {
 			Ident(out name);
-			e = new Variable(name);
+			e = new Variable(name); 
 			if (la.kind == 3) {
 				Get();
 				Expr(out e1);
 				Expect(4);
-				e = new FuncCall(name, e1);
+				e = new FuncCall(name, e1); 
 			}
 		} else if (la.kind == 2) {
 			Get();
 			e = new Constant(Convert.ToInt32(t.val),
-			                Type.intType);
+			                Type.intType); 
 		} else if (la.kind == 21) {
 			Get();
 			Factor(out e1);
-			e = new UnOp(Operator.Neg, e1);
+			e = new UnOp(Operator.Neg, e1); 
 		} else if (la.kind == 3) {
 			Get();
 			Expr(out e1);
 			Expect(4);
-			e = e1;
+			e = e1; 
 		} else SynErr(30);
 	}
 
 	void MulOp(out Operator op) {
-		op = Operator.Bad;
+		op = Operator.Bad; 
 		if (la.kind == 23) {
 			Get();
-			op = Operator.Mul;
+			op = Operator.Mul; 
 		} else if (la.kind == 24) {
 			Get();
-			op = Operator.Div;
+			op = Operator.Div; 
 		} else SynErr(31);
 	}
 
 	void Expressions() {
-		Program p;
+		Program p; 
 		Program(out p);
-		program = p;
+		program = p; 
 	}
 
 
 
 	public void Parse() {
 		la = new Token();
-		la.val = "";
+		la.val = "";		
 		Get();
 		Expressions();
 		Expect(0);
 
 	}
-
+	
 	static readonly bool[,] set = {
 		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
 		{x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x},
@@ -384,16 +384,16 @@ public class Errors {
 		errorStream.WriteLine(errMsgFormat, line, col, s);
 		count++;
 	}
-
+	
 	public virtual void SemErr (string s) {
 		errorStream.WriteLine(s);
 		count++;
 	}
-
+	
 	public virtual void Warning (int line, int col, string s) {
 		errorStream.WriteLine(errMsgFormat, line, col, s);
 	}
-
+	
 	public virtual void Warning(string s) {
 		errorStream.WriteLine(s);
 	}

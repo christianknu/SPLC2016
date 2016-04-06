@@ -97,7 +97,7 @@ IfElseExpre<out Expression e> (. Expression e1, e2, e3; e = null; .)
     "if" BoolTerm<out e1>
     "then" Expr<out e2>
     "else" Expr<out e3>
-                           (. e = new IfElseExpre(e1, e2, e3) .)
+                           (. e = new IfElseExpre(e1, e2, e3); .)
 )
 .
 
