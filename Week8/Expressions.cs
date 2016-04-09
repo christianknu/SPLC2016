@@ -325,7 +325,7 @@ namespace Expressions {
     public class IfElseExpression : Expression {
         private readonly Expression cond, e2, e3;
 
-        public IfElseExpression(BinOp cond, Expression e2, Expression e3) {
+        public IfElseExpression(Expression cond, Expression e2, Expression e3) {
             this.cond = cond;
             this.e2 = e2;
             this.e3 = e3;
@@ -347,7 +347,7 @@ namespace Expressions {
             Type t1 = cond.Check(env, fEnv);
             Type t2 = e2.Check(env, fEnv);
             Type t3 = e3.Check(env, fEnv);
-            if(t1 == Type.intType && t2.Type == Type.intType && t3.Type == Type.intType) {
+            if(t1 == Type.intType && t2 == Type.intType && t3 == Type.intType) {
                 return Type.intType;
             } else {
                 throw new TypeException("Condition must return bool and expressions must return int.");

@@ -311,9 +311,9 @@ public class Scanner {
 		switch (t.val) {
 			case "int": t.kind = 7; break;
 			case "bool": t.kind = 8; break;
-			case "if": t.kind = 11; break;
-			case "then": t.kind = 12; break;
-			case "else": t.kind = 13; break;
+			case "if": t.kind = 9; break;
+			case "then": t.kind = 10; break;
+			case "else": t.kind = 11; break;
 			default: break;
 		}
 	}
@@ -356,9 +356,9 @@ public class Scanner {
 			case 5:
 				{t.kind = 6; break;}
 			case 6:
-				{t.kind = 9; break;}
+				{t.kind = 12; break;}
 			case 7:
-				{t.kind = 10; break;}
+				{t.kind = 13; break;}
 			case 8:
 				{t.kind = 14; break;}
 			case 9:

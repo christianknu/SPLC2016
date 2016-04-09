@@ -94,7 +94,7 @@ public Program program;
 			FuncDef(out f, out name);
 			functions.Add(name, f); 
 		}
-		Expr(out e);
+		IfElseExpr(out e);
 		p = new Program(functions, e); 
 	}
 
@@ -113,18 +113,20 @@ public Program program;
 		f = new FuncDef(rt, name, at, an, e); 
 	}
 
-	void Expr(out Expression e) {
-		Expression e1, e2; Operator op; e = null; 
-		if (StartOf(1)) {
-			BoolTerm(out e1);
-			e = e1; 
+	void IfElseExpr(out Expression e) {
+		Expression e1, e2, e3; e = null; 
+		if (la.kind == 0 || la.kind == 9) {
 			while (la.kind == 9) {
-				AndOp(out op);
-				BoolTerm(out e2);
-				e = new BinOp(op, e, e2); 
+				Get();
+				SimBoolExpr(out e1);
+				Expect(10);
+				Expr(out e2);
+				Expect(11);
+				Expr(out e3);
+				e = new IfElseExpression(e1, e2, e3); 
 			}
-		} else if (la.kind == 11) {
-			IfElseExpre(out e);
+		} else if (StartOf(1)) {
+			Expr(out e);
 		} else SynErr(26);
 	}
 
@@ -144,11 +146,22 @@ public Program program;
 		name = t.val; 
 	}
 
+	void Expr(out Expression e) {
+		Expression e1, e2; Operator op; e = null; 
+		BoolTerm(out e1);
+		e = e1; 
+		while (la.kind == 12) {
+			AndOp(out op);
+			BoolTerm(out e2);
+			e = new BinOp(op, e, e2); 
+		}
+	}
+
 	void BoolTerm(out Expression e) {
 		Expression e1, e2; Operator op; e = null; 
 		SimBoolExpr(out e1);
 		e = e1; 
-		while (la.kind == 10) {
+		while (la.kind == 13) {
 			OrOp(out op);
 			SimBoolExpr(out e2);
 			e = new BinOp(op, e, e2); 
@@ -157,19 +170,8 @@ public Program program;
 
 	void AndOp(out Operator op) {
 		op = Operator.Bad; 
-		Expect(9);
-		op = Operator.And; 
-	}
-
-	void IfElseExpre(out Expression e) {
-		Expression e1, e2, e3; e = null; 
-		Expect(11);
-		BoolTerm(out e1);
 		Expect(12);
-		Expr(out e2);
-		Expect(13);
-		Expr(out e3);
-		e = new IfElseExpre(e1, e2, e3); 
+		op = Operator.And; 
 	}
 
 	void SimBoolExpr(out Expression e) {
@@ -185,7 +187,7 @@ public Program program;
 
 	void OrOp(out Operator op) {
 		op = Operator.Bad; 
-		Expect(10);
+		Expect(13);
 		op = Operator.Or; 
 	}
 
@@ -350,11 +352,11 @@ public class Errors {
 			case 6: s = "\";\" expected"; break;
 			case 7: s = "\"int\" expected"; break;
 			case 8: s = "\"bool\" expected"; break;
-			case 9: s = "\"&\" expected"; break;
-			case 10: s = "\"|\" expected"; break;
-			case 11: s = "\"if\" expected"; break;
-			case 12: s = "\"then\" expected"; break;
-			case 13: s = "\"else\" expected"; break;
+			case 9: s = "\"if\" expected"; break;
+			case 10: s = "\"then\" expected"; break;
+			case 11: s = "\"else\" expected"; break;
+			case 12: s = "\"&\" expected"; break;
+			case 13: s = "\"|\" expected"; break;
 			case 14: s = "\"==\" expected"; break;
 			case 15: s = "\"!=\" expected"; break;
 			case 16: s = "\"<\" expected"; break;
@@ -367,7 +369,7 @@ public class Errors {
 			case 23: s = "\"*\" expected"; break;
 			case 24: s = "\"/\" expected"; break;
 			case 25: s = "??? expected"; break;
-			case 26: s = "invalid Expr"; break;
+			case 26: s = "invalid IfElseExpr"; break;
 			case 27: s = "invalid TypeExpr"; break;
 			case 28: s = "invalid RelOp"; break;
 			case 29: s = "invalid AddOp"; break;
