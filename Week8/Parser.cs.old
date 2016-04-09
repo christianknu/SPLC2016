@@ -108,26 +108,23 @@ public Program program;
 		Ident(out an);
 		Expect(4);
 		Expect(5);
-		Expr(out e);
+		IfElseExpr(out e);
 		Expect(6);
 		f = new FuncDef(rt, name, at, an, e); 
 	}
 
 	void IfElseExpr(out Expression e) {
 		Expression e1, e2, e3; e = null; 
-		if (la.kind == 0 || la.kind == 9) {
-			while (la.kind == 9) {
-				Get();
-				SimBoolExpr(out e1);
-				Expect(10);
-				Expr(out e2);
-				Expect(11);
-				Expr(out e3);
-				e = new IfElseExpression(e1, e2, e3); 
-			}
+		if (la.kind == 9) {
+			Get();
+			SimBoolExpr(out e1);
+			Expect(10);
+			Expr(out e2);
+			Expect(11);
+			Expr(out e3);
+			e = new IfElseExpression(e1, e2, e3); 
 		} else if (StartOf(1)) {
-			Expr(out e4);
-			e = e4; 
+			Expr(out e);
 		} else SynErr(26);
 	}
 

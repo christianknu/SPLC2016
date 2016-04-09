@@ -39,7 +39,7 @@ FuncDef<out FuncDef f, out String name> (. f = null; String an = null; Expressio
                                                                                Type at = null; Type rt = null;.)
 = TypeExpr<out rt> Ident<out name> '('
        TypeExpr<out at> Ident<out an> ')' '='
-       Expr<out e>  ';'                                           (. f = new FuncDef(rt, name, at, an, e); .)
+       IfElseExpr<out e> ';'                                           (. f = new FuncDef(rt, name, at, an, e); .)
 .
 
 TypeExpr<out Type t>  (. t = null; .)
@@ -57,12 +57,9 @@ Expr<out Expression e>     (. Expression e1, e2; Operator op; e = null; .)
 .
 
 IfElseExpr<out Expression e> (. Expression e1, e2, e3; e = null; .)
-= {
-    "if" SimBoolExpr<out e1>
-    "then" Expr<out e2>
-    "else" Expr<out e3>
-                           (. e = new IfElseExpression(e1, e2, e3); .)
-}
+= "if" SimBoolExpr<out e1>
+  "then" Expr<out e2>
+  "else" Expr<out e3>       (. e = new IfElseExpression(e1, e2, e3); .)
 |
 Expr<out e>
 .
