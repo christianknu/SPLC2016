@@ -370,13 +370,12 @@ namespace Expressions {
         }
 
         public override int Eval(REnv env, FEnv fEnv) {
+            int res1 = e1.Eval(env, fEnv);
             env.AllocateLocal(varName);
-            env.GetVariable(varName).value = e1.Eval(env, fEnv);
-            Console.WriteLine("Variable " + varName + " with value " + env.GetVariable(varName).value + " was added to stack.");
+            env.GetVariable(varName).value = res1;
 
             int res2 = e2.Eval(env, fEnv);
             env.PopEnv();
-            Console.WriteLine("Variable " + varName + " with value " + res2 + " was popped from stack.");
             return res2;
         }
 
@@ -544,6 +543,13 @@ namespace Expressions {
 
         public void PopEnv() {
             locals.Pop();
+        }
+
+        public void PrintValues() {
+            foreach(var vars in locals) {
+                Console.WriteLine(vars.Fst + ": " + vars.Snd.value);
+            }
+            Console.WriteLine("+------------------------+");
         }
     }
 
