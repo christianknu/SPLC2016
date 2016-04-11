@@ -12,7 +12,7 @@ public class Parser {
 	public const int _EOF = 0;
 	public const int _ident = 1;
 	public const int _number = 2;
-	public const int maxT = 25;
+	public const int maxT = 28;
 
 	const bool T = true;
 	const bool x = false;
@@ -94,7 +94,7 @@ public Program program;
 			FuncDef(out f, out name);
 			functions.Add(name, f); 
 		}
-		IfElseExpr(out e);
+		Expr(out e);
 		p = new Program(functions, e); 
 	}
 
@@ -108,24 +108,20 @@ public Program program;
 		Ident(out an);
 		Expect(4);
 		Expect(5);
-		IfElseExpr(out e);
+		Expr(out e);
 		Expect(6);
 		f = new FuncDef(rt, name, at, an, e); 
 	}
 
-	void IfElseExpr(out Expression e) {
-		Expression e1, e2, e3; e = null; 
-		if (la.kind == 9) {
-			Get();
-			SimBoolExpr(out e1);
-			Expect(10);
-			Expr(out e2);
-			Expect(11);
-			Expr(out e3);
-			e = new IfElseExpression(e1, e2, e3); 
-		} else if (StartOf(1)) {
-			Expr(out e);
-		} else SynErr(26);
+	void Expr(out Expression e) {
+		Expression e1, e2; Operator op; e = null; 
+		BoolTerm(out e1);
+		e = e1; 
+		while (la.kind == 9) {
+			AndOp(out op);
+			BoolTerm(out e2);
+			e = new BinOp(op, e, e2); 
+		}
 	}
 
 	void TypeExpr(out Type t) {
@@ -136,7 +132,7 @@ public Program program;
 		} else if (la.kind == 8) {
 			Get();
 			t = Type.boolType; 
-		} else SynErr(27);
+		} else SynErr(29);
 	}
 
 	void Ident(out String name) {
@@ -144,22 +140,11 @@ public Program program;
 		name = t.val; 
 	}
 
-	void Expr(out Expression e) {
-		Expression e1, e2; Operator op; e = null; 
-		BoolTerm(out e1);
-		e = e1; 
-		while (la.kind == 12) {
-			AndOp(out op);
-			BoolTerm(out e2);
-			e = new BinOp(op, e, e2); 
-		}
-	}
-
 	void BoolTerm(out Expression e) {
 		Expression e1, e2; Operator op; e = null; 
 		SimBoolExpr(out e1);
 		e = e1; 
-		while (la.kind == 13) {
+		while (la.kind == 16) {
 			OrOp(out op);
 			SimBoolExpr(out e2);
 			e = new BinOp(op, e, e2); 
@@ -168,8 +153,35 @@ public Program program;
 
 	void AndOp(out Operator op) {
 		op = Operator.Bad; 
-		Expect(12);
+		Expect(9);
 		op = Operator.And; 
+	}
+
+	void IfElseExpr(out Expression e) {
+		Expression e1, e2, e3; e = null; 
+		if (la.kind == 10) {
+			Get();
+			BoolTerm(out e1);
+			Expect(11);
+			Expr(out e2);
+			Expect(12);
+			Expr(out e3);
+			e = new IfElseExpression(e1, e2, e3); 
+		} else if (StartOf(1)) {
+			Expr(out e);
+		} else SynErr(30);
+	}
+
+	void LetExpr(out Expression e) {
+		String id; Expression e1, e2;  e = null; 
+		Expect(13);
+		Ident(out id);
+		Expect(5);
+		IfElseExpr(out e1);
+		Expect(14);
+		IfElseExpr(out e2);
+		Expect(15);
+		e = new LetExpression(id, e1, e2); 
 	}
 
 	void SimBoolExpr(out Expression e) {
@@ -185,21 +197,29 @@ public Program program;
 
 	void OrOp(out Operator op) {
 		op = Operator.Bad; 
-		Expect(13);
+		Expect(16);
 		op = Operator.Or; 
 	}
 
 	void SimExpr(out Expression e) {
-		Expression e1, e2; Operator op; 
-		Term(out e1);
+		Expression e1 = null, e2 = null; Operator op; 
+		if (StartOf(3)) {
+			Term(out e1);
+		} else if (la.kind == 13) {
+			LetExpr(out e1);
+		} else SynErr(31);
 		e = e1; 
-		while (la.kind == 20 || la.kind == 21 || la.kind == 22) {
-			if (la.kind == 20 || la.kind == 21) {
+		while (la.kind == 23 || la.kind == 24 || la.kind == 25) {
+			if (la.kind == 23 || la.kind == 24) {
 				AddOp(out op);
 			} else {
 				ModOp(out op);
 			}
-			Term(out e2);
+			if (StartOf(3)) {
+				Term(out e2);
+			} else if (la.kind == 13) {
+				LetExpr(out e2);
+			} else SynErr(32);
 			e = new BinOp(op, e, e2); 
 		}
 	}
@@ -207,37 +227,37 @@ public Program program;
 	void RelOp(out Operator op) {
 		op = Operator.Bad; 
 		switch (la.kind) {
-		case 14: {
+		case 17: {
 			Get();
 			op = Operator.Eq;  
 			break;
 		}
-		case 15: {
+		case 18: {
 			Get();
 			op = Operator.Ne;  
 			break;
 		}
-		case 16: {
+		case 19: {
 			Get();
 			op = Operator.Lt;  
 			break;
 		}
-		case 17: {
+		case 20: {
 			Get();
 			op = Operator.Le;  
 			break;
 		}
-		case 18: {
+		case 21: {
 			Get();
 			op = Operator.Gt;  
 			break;
 		}
-		case 19: {
+		case 22: {
 			Get();
 			op = Operator.Ge;  
 			break;
 		}
-		default: SynErr(28); break;
+		default: SynErr(33); break;
 		}
 	}
 
@@ -245,7 +265,7 @@ public Program program;
 		Operator op; Expression e1, e2; 
 		Factor(out e1);
 		e = e1;                         
-		while (la.kind == 23 || la.kind == 24) {
+		while (la.kind == 26 || la.kind == 27) {
 			MulOp(out op);
 			Factor(out e2);
 			e = new BinOp(op, e, e2);       
@@ -254,18 +274,18 @@ public Program program;
 
 	void AddOp(out Operator op) {
 		op = Operator.Bad; 
-		if (la.kind == 20) {
+		if (la.kind == 23) {
 			Get();
 			op = Operator.Add; 
-		} else if (la.kind == 21) {
+		} else if (la.kind == 24) {
 			Get();
 			op = Operator.Sub; 
-		} else SynErr(29);
+		} else SynErr(34);
 	}
 
 	void ModOp(out Operator op) {
 		op = Operator.Bad; 
-		Expect(22);
+		Expect(25);
 		op = Operator.Mod; 
 	}
 
@@ -284,7 +304,7 @@ public Program program;
 			Get();
 			e = new Constant(Convert.ToInt32(t.val),
 			                Type.intType); 
-		} else if (la.kind == 21) {
+		} else if (la.kind == 24) {
 			Get();
 			Factor(out e1);
 			e = new UnOp(Operator.Neg, e1); 
@@ -293,18 +313,18 @@ public Program program;
 			Expr(out e1);
 			Expect(4);
 			e = e1; 
-		} else SynErr(30);
+		} else SynErr(35);
 	}
 
 	void MulOp(out Operator op) {
 		op = Operator.Bad; 
-		if (la.kind == 23) {
+		if (la.kind == 26) {
 			Get();
 			op = Operator.Mul; 
-		} else if (la.kind == 24) {
+		} else if (la.kind == 27) {
 			Get();
 			op = Operator.Div; 
-		} else SynErr(31);
+		} else SynErr(36);
 	}
 
 	void Expressions() {
@@ -325,9 +345,10 @@ public Program program;
 	}
 	
 	static readonly bool[,] set = {
-		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
-		{x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,T,T, x,x,x,x, x,x,x}
+		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
+		{x,T,T,T, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, T,T,T,x, x,x,x,x, x,x},
+		{x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x}
 
 	};
 } // end Parser
@@ -350,29 +371,34 @@ public class Errors {
 			case 6: s = "\";\" expected"; break;
 			case 7: s = "\"int\" expected"; break;
 			case 8: s = "\"bool\" expected"; break;
-			case 9: s = "\"if\" expected"; break;
-			case 10: s = "\"then\" expected"; break;
-			case 11: s = "\"else\" expected"; break;
-			case 12: s = "\"&\" expected"; break;
-			case 13: s = "\"|\" expected"; break;
-			case 14: s = "\"==\" expected"; break;
-			case 15: s = "\"!=\" expected"; break;
-			case 16: s = "\"<\" expected"; break;
-			case 17: s = "\"<=\" expected"; break;
-			case 18: s = "\">\" expected"; break;
-			case 19: s = "\">=\" expected"; break;
-			case 20: s = "\"+\" expected"; break;
-			case 21: s = "\"-\" expected"; break;
-			case 22: s = "\"%\" expected"; break;
-			case 23: s = "\"*\" expected"; break;
-			case 24: s = "\"/\" expected"; break;
-			case 25: s = "??? expected"; break;
-			case 26: s = "invalid IfElseExpr"; break;
-			case 27: s = "invalid TypeExpr"; break;
-			case 28: s = "invalid RelOp"; break;
-			case 29: s = "invalid AddOp"; break;
-			case 30: s = "invalid Factor"; break;
-			case 31: s = "invalid MulOp"; break;
+			case 9: s = "\"&\" expected"; break;
+			case 10: s = "\"if\" expected"; break;
+			case 11: s = "\"then\" expected"; break;
+			case 12: s = "\"else\" expected"; break;
+			case 13: s = "\"let\" expected"; break;
+			case 14: s = "\"in\" expected"; break;
+			case 15: s = "\"end\" expected"; break;
+			case 16: s = "\"|\" expected"; break;
+			case 17: s = "\"==\" expected"; break;
+			case 18: s = "\"!=\" expected"; break;
+			case 19: s = "\"<\" expected"; break;
+			case 20: s = "\"<=\" expected"; break;
+			case 21: s = "\">\" expected"; break;
+			case 22: s = "\">=\" expected"; break;
+			case 23: s = "\"+\" expected"; break;
+			case 24: s = "\"-\" expected"; break;
+			case 25: s = "\"%\" expected"; break;
+			case 26: s = "\"*\" expected"; break;
+			case 27: s = "\"/\" expected"; break;
+			case 28: s = "??? expected"; break;
+			case 29: s = "invalid TypeExpr"; break;
+			case 30: s = "invalid IfElseExpr"; break;
+			case 31: s = "invalid SimExpr"; break;
+			case 32: s = "invalid SimExpr"; break;
+			case 33: s = "invalid RelOp"; break;
+			case 34: s = "invalid AddOp"; break;
+			case 35: s = "invalid Factor"; break;
+			case 36: s = "invalid MulOp"; break;
 
 			default: s = "error " + n; break;
 		}

@@ -1,1 +1,1 @@
-let x = e1 in e2 end
+let x = 2 in let y = x+3 in y*4 end end

@@ -359,6 +359,46 @@ namespace Expressions {
         }
     }
 
+    public class LetExpression : Expression {
+        private String varName;
+        private readonly Expression e1, e2;
+
+        public LetExpression(String varName, Expression e1, Expression e2) {
+            this.varName = varName;
+            this.e1 = e1;
+            this.e2 = e2;
+        }
+
+        public override int Eval(REnv env, FEnv fEnv) {
+            env.AllocateLocal(varName);
+            env.GetVariable(varName).value = e1.Eval(env, fEnv);
+            Console.WriteLine("Variable " + varName + " with value " + env.GetVariable(varName).value + " was added to stack.");
+
+            int res2 = e2.Eval(env, fEnv);
+            env.PopEnv();
+            Console.WriteLine("Variable " + varName + " with value " + res2 + " was popped from stack.");
+            return res2;
+        }
+
+        public override Type Check(TEnv env, FEnv fEnv) {
+            Type t1 = e1.Check(env, fEnv);
+            env.DeclareLocal(varName, t1);
+
+            Type t2 = e2.Check(env, fEnv);
+            env.PopEnv();
+
+            if(t2 == Type.intType) {
+                return Type.intType;
+            } else {
+                throw new TypeException("Expressions must return int.");
+            }
+        }
+
+        public override void Compile(CEnv env, Generator gen) {
+            throw new NotSupportedException("This functionality will be provided at a later moment.");
+        }
+    }
+
     public class UnOp : Expression {
         private readonly Operator op;
         private readonly Expression e1;
@@ -447,8 +487,6 @@ namespace Expressions {
             gen.Emit(new CALL(1, fLabel));
         }
     }
-
-
 
     // Function environment. Keeps track of the functions defined in a given context.
 
@@ -539,7 +577,7 @@ namespace Expressions {
             this.name = name;
         }
 
-        public override String ToString() { return name;}
+        public override String ToString() { return name; }
     }
 
     // Type checking environments
