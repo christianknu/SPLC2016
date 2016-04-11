@@ -6,6 +6,8 @@
  */
 
 using System.Collections.Generic;
+using ListFormalArgs = System.Collections.Generic.List<Expressions.Pair<System.String, Expressions.Type>>;
+using ListExpr = System.Collections.Generic.List<Expressions.Expression>;
 
 COMPILER Expressions
   public Program program;
@@ -36,10 +38,11 @@ Program<out Program p>     (. p = null; FuncDef f = null; String name = null; Ex
 .
 
 FuncDef<out FuncDef f, out String name> (. f = null; String an = null; Expression e = null;
-                                                                               Type at = null; Type rt = null;.)
+                                        Type at = null; Type rt = null; ListFormalArgs formalArgs = new ListFormalArgs(); .)
 = TypeExpr<out rt> Ident<out name> '('
-       TypeExpr<out at> Ident<out an> ')' '='
-       Expr<out e> ';'                                           (. f = new FuncDef(rt, name, at, an, e); .)
+   { TypeExpr<out at> Ident<out an> (. formalArgs.Add(at, an); .) }
+   ')' '='
+   Expr<out e> ';'                      (. f = new FuncDef(rt, name, formalArgs, e); .)
 .
 
 TypeExpr<out Type t>  (. t = null; .)
@@ -136,10 +139,12 @@ ModOp<out Operator op>     (. op = Operator.Bad; .)
 .
 
 /*------------------------------------------------------------------------*/
-Factor<out Expression e>   (. String name; Expression e1; e = null; .)
+Factor<out Expression e>   (. String name; Expression e1; ListExpr eList = new ListExpr(); e = null; .)
 = ( Ident<out name>             (. e = new Variable(name); .)
      [
-        '(' Expr<out e1> ')' (. e = new FuncCall(name, e1); .)
+        '('
+            { Expr<out e1> (. eList.Add(e1); .) }
+        ')' (. e = new FuncCall(name, eList); .)
      ]
   | number                 (. e = new Constant(Convert.ToInt32(t.val),
                                                Type.intType); .)

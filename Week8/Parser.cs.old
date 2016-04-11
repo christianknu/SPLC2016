@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using ListFormalArgs = System.Collections.Generic.List<Expressions.Pair<System.String, Expressions.Type>>;
+using ListExpr = System.Collections.Generic.List<Expressions.Expression>;
 
 
 
@@ -100,17 +102,20 @@ public Program program;
 
 	void FuncDef(out FuncDef f, out String name) {
 		f = null; String an = null; Expression e = null;
-		                                   Type at = null; Type rt = null;
+		Type at = null; Type rt = null; ListFormalArgs formalArgs = new ListFormalArgs(); 
 		TypeExpr(out rt);
 		Ident(out name);
 		Expect(3);
-		TypeExpr(out at);
-		Ident(out an);
+		while (la.kind == 7 || la.kind == 8) {
+			TypeExpr(out at);
+			Ident(out an);
+			formalArgs.Add(at, an); 
+		}
 		Expect(4);
 		Expect(5);
 		Expr(out e);
 		Expect(6);
-		f = new FuncDef(rt, name, at, an, e); 
+		f = new FuncDef(rt, name, formalArgs, e); 
 	}
 
 	void Expr(out Expression e) {
@@ -290,15 +295,18 @@ public Program program;
 	}
 
 	void Factor(out Expression e) {
-		String name; Expression e1; e = null; 
+		String name; Expression e1; ListExpr eList = new ListExpr(); e = null; 
 		if (la.kind == 1) {
 			Ident(out name);
 			e = new Variable(name); 
 			if (la.kind == 3) {
 				Get();
-				Expr(out e1);
+				while (StartOf(1)) {
+					Expr(out e1);
+					eList.Add(e1); 
+				}
 				Expect(4);
-				e = new FuncCall(name, e1); 
+				e = new FuncCall(name, eList); 
 			}
 		} else if (la.kind == 2) {
 			Get();

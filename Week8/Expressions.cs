@@ -88,43 +88,53 @@ namespace Expressions {
 
     public class FuncDef {
         private readonly String fName;
-        private readonly Pair<String,Type> formArg;
+        private readonly List<Pair<String,Type>> formArgs;
         private readonly Expression body;
         public  readonly Type returnType;
 
-        public FuncDef(Type returnType, String fName, Type argType, String argName, Expression body) {
-            this.formArg = new Pair<string, Type>(argName, argType);
+        public FuncDef(Type returnType, String fName, List<Pair<String, Type>> formArgs, Expression body) {
+            this.formArgs = formArgs;
             this.body = body; this.returnType = returnType;
             this.fName = fName;
         }
 
         public void Check (TEnv env, FEnv fEnv) {
-            env.DeclareLocal(formArg.Fst, formArg.Snd);
+            foreach(var formArg in formArgs) {
+                env.DeclareLocal(formArg.Fst, formArg.Snd);
+            }
             Type t = body.Check(env, fEnv);
-            env.PopEnv();
+            foreach(var formArg in formArgs)
+                env.PopEnv();
             if(t != returnType)
-            throw new TypeException("Body of " + fName + " returns " + t + ", " + returnType + " expected");
+                throw new TypeException("Body of " + fName + " returns " + t + ", " + returnType + " expected");
         }
 
         public int Eval(REnv env, FEnv fenv, int arg) {
-            env.AllocateLocal(formArg.Fst);
-            env.GetVariable(formArg.Fst).value = arg;
+            foreach(var formArg in formArgs) {
+                env.AllocateLocal(formArg.Fst);
+                env.GetVariable(formArg.Fst).value = arg;
+            }
             int v = body.Eval(env, fenv);
-            env.PopEnv();
+            foreach(var formArg in formArgs)
+                env.PopEnv();
             return v;
         }
 
         public void Compile(Generator gen, CEnv env) {
-            env.DeclareLocal(formArg.Fst); // Formal argument name points to top of stack
-            gen.Label(env.getFunctionLabel(fName));
-            body.Compile(env, gen);
-            gen.Emit(new RET(1));
+            //env.DeclareLocal(formArg.Fst); // Formal argument name points to top of stack
+            //gen.Label(env.getFunctionLabel(fName));
+            //body.Compile(env, gen);
+            //gen.Emit(new RET(1));
+            throw new NotSupportedException("This functionality will be provided at a later moment.");
         }
 
         public bool CheckArgType(Type argType) {
-            if(argType != formArg.Snd)
+            foreach(var formArg in formArgs) {
+                if (formArg.Snd == argType) {
+                    return true;
+                }
+            }
             return false;
-            return true;
         }
     }
 
@@ -459,31 +469,37 @@ namespace Expressions {
 
     public class FuncCall : Expression {
         private readonly String fName;
-        private readonly Expression arg;
+        private readonly List<Expression> args;
 
-        public FuncCall(String fName, Expression arg) {
-            this.fName = fName; this.arg = arg;
+        public FuncCall(String fName, List<Expression> args) {
+            this.fName = fName; this.args = args;
         }
 
         public override Type Check(TEnv env, FEnv fenv) {
-            Type argType = arg.Check(env,fenv);
-            FuncDef fDef = fenv.getFunction(fName);
-            if (fDef.CheckArgType(argType))
-                return fDef.returnType;
-            else
+            foreach(var arg in args) {
+                Type argType = arg.Check(env,fenv);
+                FuncDef fDef = fenv.getFunction(fName);
+                if (fDef.CheckArgType(argType))
+                    return fDef.returnType;
+                else
                     throw new TypeException("Type error in call of function " + fName);
+            }
         }
 
         public override int Eval(REnv env, FEnv fenv) {
-            int argValue = arg.Eval(env, fenv);
-            FuncDef fDef = fenv.getFunction(fName);
-            return fDef.Eval(env, fenv, argValue);
+            foreach (var arg in args)
+            {
+                int argValue = arg.Eval(env, fenv);
+                FuncDef fDef = fenv.getFunction(fName);
+                return fDef.Eval(env, fenv, argValue);
+            }
         }
 
         public override void Compile(CEnv env, Generator gen) {
-            arg.Compile (env, gen);
-            String fLabel = env.getFunctionLabel(fName);
-            gen.Emit(new CALL(1, fLabel));
+            //arg.Compile (env, gen);
+            //String fLabel = env.getFunctionLabel(fName);
+            //gen.Emit(new CALL(1, fLabel));
+            throw new NotSupportedException("This functionality will be provided at a later moment.");
         }
     }
 
