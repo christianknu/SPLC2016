@@ -32,14 +32,14 @@ Program<out Program p>     (. p = null; FuncDef f = null; String name = null; Ex
 = {
 	FuncDef<out f, out name>       (. functions.Add(name, f); .)
    }
-   Expr<out e>                     (. p = new Program(functions, e); .)
+   IfElseExpr<out e>                     (. p = new Program(functions, e); .)
 .
 
 FuncDef<out FuncDef f, out String name> (. f = null; String an = null; Expression e = null;
                                                                                Type at = null; Type rt = null;.)
 = TypeExpr<out rt> Ident<out name> '('
        TypeExpr<out at> Ident<out an> ')' '='
-       Expr<out e> ';'                                           (. f = new FuncDef(rt, name, at, an, e); .)
+       IfElseExpr<out e> ';'                                           (. f = new FuncDef(rt, name, at, an, e); .)
 .
 
 TypeExpr<out Type t>  (. t = null; .)
@@ -139,12 +139,12 @@ ModOp<out Operator op>     (. op = Operator.Bad; .)
 Factor<out Expression e>   (. String name; Expression e1; e = null; .)
 = ( Ident<out name>             (. e = new Variable(name); .)
      [
-        '(' Expr<out e1> ')' (. e = new FuncCall(name, e1); .)
+        '(' IfElseExpr<out e1> ')' (. e = new FuncCall(name, e1); .)
      ]
   | number                 (. e = new Constant(Convert.ToInt32(t.val),
                                                Type.intType); .)
   | '-' Factor<out e1>     (. e = new UnOp(Operator.Neg, e1); .)
-  | '(' Expr<out e1> ')'   (. e = e1; .)
+  | '(' IfElseExpr<out e1> ')'   (. e = e1; .)
   )
 .
 
