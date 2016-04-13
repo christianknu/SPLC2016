@@ -96,7 +96,7 @@ public Program program;
 			FuncDef(out f, out name);
 			functions.Add(name, f); 
 		}
-		Expr(out e);
+		IfElseExpr(out e);
 		p = new Program(functions, e); 
 	}
 
@@ -113,9 +113,40 @@ public Program program;
 		}
 		Expect(4);
 		Expect(5);
-		Expr(out e);
+		IfElseExpr(out e);
 		Expect(6);
 		f = new FuncDef(rt, name, formalArgs, e); 
+	}
+
+	void IfElseExpr(out Expression e) {
+		Expression e1, e2, e3; e = null; 
+		if (la.kind == 10) {
+			Get();
+			BoolTerm(out e1);
+			Expect(11);
+			IfElseExpr(out e2);
+			Expect(12);
+			IfElseExpr(out e3);
+			e = new IfElseExpression(e1, e2, e3); 
+		} else if (StartOf(1)) {
+			Expr(out e);
+		} else SynErr(29);
+	}
+
+	void TypeExpr(out Type t) {
+		t = null; 
+		if (la.kind == 7) {
+			Get();
+			t = Type.intType; 
+		} else if (la.kind == 8) {
+			Get();
+			t = Type.boolType; 
+		} else SynErr(30);
+	}
+
+	void Ident(out String name) {
+		Expect(1);
+		name = t.val; 
 	}
 
 	void Expr(out Expression e) {
@@ -127,22 +158,6 @@ public Program program;
 			BoolTerm(out e2);
 			e = new BinOp(op, e, e2); 
 		}
-	}
-
-	void TypeExpr(out Type t) {
-		t = null; 
-		if (la.kind == 7) {
-			Get();
-			t = Type.intType; 
-		} else if (la.kind == 8) {
-			Get();
-			t = Type.boolType; 
-		} else SynErr(29);
-	}
-
-	void Ident(out String name) {
-		Expect(1);
-		name = t.val; 
 	}
 
 	void BoolTerm(out Expression e) {
@@ -160,21 +175,6 @@ public Program program;
 		op = Operator.Bad; 
 		Expect(9);
 		op = Operator.And; 
-	}
-
-	void IfElseExpr(out Expression e) {
-		Expression e1, e2, e3; e = null; 
-		if (la.kind == 10) {
-			Get();
-			BoolTerm(out e1);
-			Expect(11);
-			Expr(out e2);
-			Expect(12);
-			Expr(out e3);
-			e = new IfElseExpression(e1, e2, e3); 
-		} else if (StartOf(1)) {
-			Expr(out e);
-		} else SynErr(30);
 	}
 
 	void LetExpr(out Expression e) {
@@ -301,8 +301,8 @@ public Program program;
 			e = new Variable(name); 
 			if (la.kind == 3) {
 				Get();
-				while (StartOf(1)) {
-					Expr(out e1);
+				while (StartOf(4)) {
+					IfElseExpr(out e1);
 					eList.Add(e1); 
 				}
 				Expect(4);
@@ -318,7 +318,7 @@ public Program program;
 			e = new UnOp(Operator.Neg, e1); 
 		} else if (la.kind == 3) {
 			Get();
-			Expr(out e1);
+			IfElseExpr(out e1);
 			Expect(4);
 			e = e1; 
 		} else SynErr(35);
@@ -356,7 +356,8 @@ public Program program;
 		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
 		{x,T,T,T, x,x,x,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x},
 		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, T,T,T,x, x,x,x,x, x,x},
-		{x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x}
+		{x,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x},
+		{x,T,T,T, x,x,x,x, x,x,T,x, x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x}
 
 	};
 } // end Parser
@@ -399,8 +400,8 @@ public class Errors {
 			case 26: s = "\"*\" expected"; break;
 			case 27: s = "\"/\" expected"; break;
 			case 28: s = "??? expected"; break;
-			case 29: s = "invalid TypeExpr"; break;
-			case 30: s = "invalid IfElseExpr"; break;
+			case 29: s = "invalid IfElseExpr"; break;
+			case 30: s = "invalid TypeExpr"; break;
 			case 31: s = "invalid SimExpr"; break;
 			case 32: s = "invalid SimExpr"; break;
 			case 33: s = "invalid RelOp"; break;

@@ -476,6 +476,7 @@ namespace Expressions {
         }
 
         public override Type Check(TEnv env, FEnv fenv) {
+            List<Type> types = new List<Type>();
             foreach(var arg in args) {
                 Type argType = arg.Check(env,fenv);
                 FuncDef fDef = fenv.getFunction(fName);

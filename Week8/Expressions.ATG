@@ -34,7 +34,7 @@ Program<out Program p>     (. p = null; FuncDef f = null; String name = null; Ex
 = {
 	FuncDef<out f, out name>       (. functions.Add(name, f); .)
    }
-   Expr<out e>                     (. p = new Program(functions, e); .)
+   IfElseExpr<out e>                     (. p = new Program(functions, e); .)
 .
 
 FuncDef<out FuncDef f, out String name> (. f = null; String an = null; Expression e = null;
@@ -42,7 +42,7 @@ FuncDef<out FuncDef f, out String name> (. f = null; String an = null; Expressio
 = TypeExpr<out rt> Ident<out name> '('
    { TypeExpr<out at> Ident<out an> (. formalArgs.Add(at, an); .) }
    ')' '='
-   Expr<out e> ';'                      (. f = new FuncDef(rt, name, formalArgs, e); .)
+   IfElseExpr<out e> ';'                      (. f = new FuncDef(rt, name, formalArgs, e); .)
 .
 
 TypeExpr<out Type t>  (. t = null; .)
@@ -65,8 +65,8 @@ AndOp<out Operator op>  (. op = Operator.Bad; .)
 
 IfElseExpr<out Expression e> (. Expression e1, e2, e3; e = null; .)
 = "if" BoolTerm<out e1>
-  "then" Expr<out e2>
-  "else" Expr<out e3>       (. e = new IfElseExpression(e1, e2, e3); .)
+  "then" IfElseExpr<out e2>
+  "else" IfElseExpr<out e3>       (. e = new IfElseExpression(e1, e2, e3); .)
 |
 Expr<out e>
 .
@@ -101,10 +101,11 @@ SimBoolExpr<out Expression e>     (. Expression e1, e2; Operator op; e = null; .
 
 /*------------------------------------------------------------------------*/
 SimExpr<out Expression e>  (. Expression e1 = null, e2 = null; Operator op; .)
-= (Term<out e1> | LetExpr<out e1>)                     (. e = e1; .)
-  { (AddOp<out op> | ModOp<out op>)
-    (Term<out e2> | LetExpr<out e2>)                   (. e = new BinOp(op, e, e2); .)
-	}
+= (Term<out e1> | LetExpr<out e1>)          (. e = e1; .)
+  {
+    (AddOp<out op> | ModOp<out op>)
+    (Term<out e2> | LetExpr<out e2>)        (. e = new BinOp(op, e, e2); .)
+  }
 .
 
 /*------------------------------------------------------------------------*/
