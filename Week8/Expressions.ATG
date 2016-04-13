@@ -143,13 +143,13 @@ Factor<out Expression e>   (. String name; Expression e1; ListExpr eList = new L
 = ( Ident<out name>             (. e = new Variable(name); .)
      [
         '('
-            { Expr<out e1> (. eList.Add(e1); .) }
+            { IfElseExpr<out e1> (. eList.Add(e1); .) }
         ')' (. e = new FuncCall(name, eList); .)
      ]
   | number                 (. e = new Constant(Convert.ToInt32(t.val),
                                                Type.intType); .)
   | '-' Factor<out e1>     (. e = new UnOp(Operator.Neg, e1); .)
-  | '(' Expr<out e1> ')'   (. e = e1; .)
+  | '(' IfElseExpr<out e1> ')'   (. e = e1; .)
   )
 .
 
