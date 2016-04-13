@@ -32,15 +32,15 @@ PRODUCTIONS
 Program<out Program p>     (. p = null; FuncDef f = null; String name = null; Expression e = null;
                                    Dictionary<String,FuncDef> functions = new Dictionary<string, FuncDef>(); .)
 = {
-	FuncDef<out f, out name>       (. functions.Add(name, f); .)
+	FuncDef<out f, out name>        (. functions.Add(name, f); .)
    }
-   IfElseExpr<out e>                     (. p = new Program(functions, e); .)
+   IfElseExpr<out e>                (. p = new Program(functions, e); .)
 .
 
 FuncDef<out FuncDef f, out String name> (. f = null; String an = null; Expression e = null;
                                         Type at = null; Type rt = null; ListFormalArgs formalArgs = new ListFormalArgs(); .)
-= TypeExpr<out rt> Ident<out name> '('
-   { TypeExpr<out at> Ident<out an> (. formalArgs.Add(at, an); .) }
+= TypeExpr<out rt> Ident<out name> '(' [ TypeExpr<out at> Ident<out an> (. formalArgs.Add(new Pair<String, Type>(an, at)); .) ]
+   { ',' TypeExpr<out at> Ident<out an> (. formalArgs.Add(new Pair<String, Type>(an, at)); .) }
    ')' '='
    IfElseExpr<out e> ';'                      (. f = new FuncDef(rt, name, formalArgs, e); .)
 .
@@ -67,8 +67,7 @@ IfElseExpr<out Expression e> (. Expression e1, e2, e3; e = null; .)
 = "if" BoolTerm<out e1>
   "then" IfElseExpr<out e2>
   "else" IfElseExpr<out e3>       (. e = new IfElseExpression(e1, e2, e3); .)
-|
-Expr<out e>
+| Expr<out e1> (. e = e1; .)
 .
 
 LetExpr<out Expression e> (. String id; Expression e1, e2;  e = null; .)
@@ -100,11 +99,11 @@ SimBoolExpr<out Expression e>     (. Expression e1, e2; Operator op; e = null; .
 .
 
 /*------------------------------------------------------------------------*/
-SimExpr<out Expression e>  (. Expression e1 = null, e2 = null; Operator op; .)
-= (Term<out e1> | LetExpr<out e1>)          (. e = e1; .)
+SimExpr<out Expression e>  (. Expression e1, e2; Operator op; .)
+= Term<out e1>                      (. e = e1; .)
   {
-    (AddOp<out op> | ModOp<out op>)
-    (Term<out e2> | LetExpr<out e2>)        (. e = new BinOp(op, e, e2); .)
+    AddOp<out op>
+    Term<out e2>                    (. e = new BinOp(op, e, e2); .)
   }
 .
 
@@ -134,23 +133,20 @@ AddOp<out Operator op>     (. op = Operator.Bad; .)
   )
 .
 
-ModOp<out Operator op>     (. op = Operator.Bad; .)
-= ( '%'                    (. op = Operator.Mod; .)
-  )
-.
-
 /*------------------------------------------------------------------------*/
 Factor<out Expression e>   (. String name; Expression e1; ListExpr eList = new ListExpr(); e = null; .)
 = ( Ident<out name>             (. e = new Variable(name); .)
      [
-        '('
-            { IfElseExpr<out e1> (. eList.Add(e1); .) }
+        '('   [IfElseExpr<out e1> (. eList.Add(e1); .)]
+
+            { ',' IfElseExpr<out e1> (. eList.Add(e1); .) }
         ')' (. e = new FuncCall(name, eList); .)
      ]
   | number                 (. e = new Constant(Convert.ToInt32(t.val),
                                                Type.intType); .)
   | '-' Factor<out e1>     (. e = new UnOp(Operator.Neg, e1); .)
   | '(' IfElseExpr<out e1> ')'   (. e = e1; .)
+  | LetExpr<out e1>              (. e = e1; .)
   )
 .
 
@@ -158,6 +154,7 @@ Factor<out Expression e>   (. String name; Expression e1; ListExpr eList = new L
 MulOp<out Operator op>     (. op = Operator.Bad; .)
 = ( '*'                    (. op = Operator.Mul; .)
   | '/'                    (. op = Operator.Div; .)
+  | '%'                    (. op = Operator.Mod; .)
   )
 .
 

@@ -109,12 +109,15 @@ namespace Expressions {
                 throw new TypeException("Body of " + fName + " returns " + t + ", " + returnType + " expected");
         }
 
-        public int Eval(REnv env, FEnv fenv, int arg) {
+        public int Eval(REnv env, FEnv fenv, List<int> args) {
+            int i = 0;
             foreach(var formArg in formArgs) {
                 env.AllocateLocal(formArg.Fst);
-                env.GetVariable(formArg.Fst).value = arg;
+                env.GetVariable(formArg.Fst).value = args[i];
+                i++;
             }
             int v = body.Eval(env, fenv);
+            env.PrintValues();
             foreach(var formArg in formArgs)
                 env.PopEnv();
             return v;
@@ -469,31 +472,33 @@ namespace Expressions {
 
     public class FuncCall : Expression {
         private readonly String fName;
-        private readonly List<Expression> args;
+        private readonly List<Expression> expressions;
 
-        public FuncCall(String fName, List<Expression> args) {
-            this.fName = fName; this.args = args;
+        public FuncCall(String fName, List<Expression> expressions) {
+            this.fName = fName; this.expressions = expressions;
         }
 
         public override Type Check(TEnv env, FEnv fenv) {
-            List<Type> types = new List<Type>();
-            foreach(var arg in args) {
-                Type argType = arg.Check(env,fenv);
+            foreach(var expression in expressions) {
+                Type argType = expression.Check(env,fenv);
                 FuncDef fDef = fenv.getFunction(fName);
-                if (fDef.CheckArgType(argType))
-                    return fDef.returnType;
-                else
+                if (!fDef.CheckArgType(argType))
                     throw new TypeException("Type error in call of function " + fName);
             }
+            return Type.intType;
         }
 
         public override int Eval(REnv env, FEnv fenv) {
-            foreach (var arg in args)
+            int value = 0;
+            List<int> values = new List<int>();
+            foreach (var expression in expressions)
             {
-                int argValue = arg.Eval(env, fenv);
-                FuncDef fDef = fenv.getFunction(fName);
-                return fDef.Eval(env, fenv, argValue);
+                int argValue = expression.Eval(env, fenv);
+                values.Add(argValue);
             }
+            FuncDef fDef = fenv.getFunction(fName);
+            value = fDef.Eval(env, fenv, values);
+            return value;
         }
 
         public override void Compile(CEnv env, Generator gen) {
@@ -520,9 +525,9 @@ namespace Expressions {
 
         public FuncDef getFunction(String name) {
             if(functions.ContainsKey(name))
-            return functions[name];
+                return functions[name];
             else
-            throw new Exception("Undefined Function " + name);
+                throw new Exception("Undefined Function " + name);
         }
 
         public List<FuncDef> getFunctions() {
