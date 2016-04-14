@@ -117,7 +117,7 @@ namespace Expressions {
                 i++;
             }
             int v = body.Eval(env, fenv);
-            env.PrintValues();
+
             foreach(var formArg in formArgs)
                 env.PopEnv();
             return v;
@@ -565,13 +565,6 @@ namespace Expressions {
 
         public void PopEnv() {
             locals.Pop();
-        }
-
-        public void PrintValues() {
-            foreach(var vars in locals) {
-                Console.WriteLine(vars.Fst + ": " + vars.Snd.value);
-            }
-            Console.WriteLine("+------------------------+");
         }
     }
 
