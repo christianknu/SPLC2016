@@ -1,0 +1,170 @@
+/* Coco/R lexer and parser specification for arithmetic expressions. */
+/* 2006-09-14 */
+
+/* Build with:
+ *   Coco.exe -namespace Expressions Expressions.ATG
+ */
+
+using System.Collections.Generic;
+using ListFormalArgs = System.Collections.Generic.List<Expressions.Pair<System.String, Expressions.Type>>;
+using ListExpr = System.Collections.Generic.List<Expressions.Expression>;
+
+COMPILER Expressions
+  public Program program;
+
+/*--------------------------------------------------------------------------*/
+CHARACTERS
+  letter = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".
+  digit = "0123456789".
+  cr  = '\r'.
+  lf  = '\n'.
+  tab = '\t'.
+
+TOKENS
+  ident  = letter {letter | digit}.
+  number = digit {digit}.
+
+IGNORE cr + lf + tab
+
+PRODUCTIONS
+
+/*------------------------------------------------------------------------*/
+Program<out Program p>     (. p = null; FuncDef f = null; String name = null; Expression e = null;
+                                   Dictionary<String,FuncDef> functions = new Dictionary<string, FuncDef>(); .)
+= {
+	FuncDef<out f, out name>        (. functions.Add(name, f); .)
+   }
+   IfElseExpr<out e>                (. p = new Program(functions, e); .)
+.
+
+FuncDef<out FuncDef f, out String name> (. f = null; String an = null; Expression e = null;
+                                        Type at = null; Type rt = null; ListFormalArgs formalArgs = new ListFormalArgs(); .)
+= TypeExpr<out rt> Ident<out name> '(' [ TypeExpr<out at> Ident<out an> (. formalArgs.Add(new Pair<String, Type>(an, at)); .) ]
+   { ',' TypeExpr<out at> Ident<out an> (. formalArgs.Add(new Pair<String, Type>(an, at)); .) }
+   ')' '='
+   IfElseExpr<out e> ';'                      (. f = new FuncDef(rt, name, formalArgs, e); .)
+.
+
+TypeExpr<out Type t>  (. t = null; .)
+= "int"    (. t = Type.intType; .)
+| "bool"  (. t = Type.boolType; .)
+.
+
+
+/*------------------------------------------------------------------------*/
+Expr<out Expression e>     (. Expression e1, e2; Operator op; e = null; .)
+= BoolTerm<out e1>          (. e = e1; .)
+  { AndOp<out op>
+    BoolTerm<out e2>         (. e = new BinOp(op, e, e2); .)
+  }
+.
+
+AndOp<out Operator op>  (. op = Operator.Bad; .)
+= '&'    (. op = Operator.And; .)
+.
+
+IfElseExpr<out Expression e> (. Expression e1, e2, e3; e = null; .)
+= "if" BoolTerm<out e1>
+  "then" IfElseExpr<out e2>
+  "else" IfElseExpr<out e3>       (. e = new IfElseExpression(e1, e2, e3); .)
+| Expr<out e1> (. e = e1; .)
+.
+
+LetExpr<out Expression e> (. String id; Expression e1, e2;  e = null; .)
+=   "let"   Ident<out id>
+    "="     IfElseExpr<out e1>
+    "in"    IfElseExpr<out e2>
+    "end"                       (. e = new LetExpression(id, e1, e2); .)
+.
+
+/*------------------------------------------------------------------------*/
+
+BoolTerm<out Expression e>     (. Expression e1, e2; Operator op; e = null; .)
+= SimBoolExpr<out e1>          (. e = e1; .)
+  { OrOp<out op>
+    SimBoolExpr<out e2>        (. e = new BinOp(op, e, e2); .)
+  }
+.
+
+OrOp<out Operator op>  (. op = Operator.Bad; .)
+= '|'    (. op = Operator.Or; .)
+.
+
+/*------------------------------------------------------------------------*/
+SimBoolExpr<out Expression e>     (. Expression e1, e2; Operator op; e = null; .)
+= SimExpr<out e1>          (. e = e1; .)
+  [ RelOp<out op>
+    SimExpr<out e2>        (. e = new BinOp(op, e, e2); .)
+  ]
+.
+
+/*------------------------------------------------------------------------*/
+SimExpr<out Expression e>  (. Expression e1, e2; Operator op; .)
+= Term<out e1>                      (. e = e1; .)
+  {
+    AddOp<out op>
+    Term<out e2>                    (. e = new BinOp(op, e, e2); .)
+  }
+.
+
+/*------------------------------------------------------------------------*/
+RelOp<out Operator op>     (. op = Operator.Bad; .)
+= ( "=="                   (. op = Operator.Eq;  .)
+  | "!="                   (. op = Operator.Ne;  .)
+  | "<"                    (. op = Operator.Lt;  .)
+  | "<="                   (. op = Operator.Le;  .)
+  | ">"                    (. op = Operator.Gt;  .)
+  | ">="                   (. op = Operator.Ge;  .)
+  )
+.
+
+/*------------------------------------------------------------------------*/
+Term<out Expression e>     (. Operator op; Expression e1, e2; .)
+= Factor<out e1>           (. e = e1;                         .)
+  { MulOp<out op>
+    Factor<out e2>         (. e = new BinOp(op, e, e2);       .)
+	}
+.
+
+/*------------------------------------------------------------------------*/
+AddOp<out Operator op>     (. op = Operator.Bad; .)
+= ( '+'                    (. op = Operator.Add; .)
+  | '-'                    (. op = Operator.Sub; .)
+  )
+.
+
+/*------------------------------------------------------------------------*/
+Factor<out Expression e>   (. String name; Expression e1; ListExpr eList = new ListExpr(); e = null; .)
+= ( Ident<out name>             (. e = new Variable(name); .)
+     [
+        '('   [IfElseExpr<out e1> (. eList.Add(e1); .)]
+
+            { ',' IfElseExpr<out e1> (. eList.Add(e1); .) }
+        ')' (. e = new FuncCall(name, eList); .)
+     ]
+  | number                 (. e = new Constant(Convert.ToInt32(t.val),
+                                               Type.intType); .)
+  | '-' Factor<out e1>     (. e = new UnOp(Operator.Neg, e1); .)
+  | '(' IfElseExpr<out e1> ')'   (. e = e1; .)
+  | LetExpr<out e1>              (. e = e1; .)
+  )
+.
+
+/*------------------------------------------------------------------------*/
+MulOp<out Operator op>     (. op = Operator.Bad; .)
+= ( '*'                    (. op = Operator.Mul; .)
+  | '/'                    (. op = Operator.Div; .)
+  | '%'                    (. op = Operator.Mod; .)
+  )
+.
+
+/*------------------------------------------------------------------------*/
+Ident<out String name>
+= ident                    (. name = t.val; .)
+.
+
+/*------------------------------------------------------------------------*/
+Expressions                (. Program p; .)
+= Program<out p>              (. program = p; .)
+.
+END Expressions.
