@@ -124,11 +124,18 @@ namespace Expressions {
         }
 
         public void Compile(Generator gen, CEnv env) {
+            int numOfFormArgs = 0;
+            foreach(var formArg in formArgs) {
+                env.DeclareLocal(formArg.Fst);
+                gen.Label(env.getFunctionLabel(fName));
+                numOfFormArgs++;
+            }
+
             //env.DeclareLocal(formArg.Fst); // Formal argument name points to top of stack
             //gen.Label(env.getFunctionLabel(fName));
-            //body.Compile(env, gen);
-            //gen.Emit(new RET(1));
-            throw new NotSupportedException("This functionality will be provided at a later moment.");
+            body.Compile(env, gen);
+            gen.Emit(new RET(1));
+            //throw new NotSupportedException("This functionality will be provided at a later moment.");
         }
 
         public bool CheckArgType(Type argType) {
@@ -328,6 +335,9 @@ namespace Expressions {
                     gen.Emit(Instruction.EQ);
                     gen.Emit(Instruction.NOT);
                     break;
+                case Operator.Mod:
+                    gen.Emit(Instruction.MOD);
+                    break;
                 default:
                     throw new Exception("Unknown binary operator: " + op);
             }
@@ -368,7 +378,29 @@ namespace Expressions {
         }
 
         public override void Compile(CEnv env, Generator gen) {
-            throw new NotSupportedException("This functionality will be provided at a later moment.");
+            /*
+                <e1>
+                IFZERO L1
+                <e2>
+                GOTO L2
+                L1:
+                <e3>
+                L2:
+            */
+
+            cond.Compile(env, gen);
+            gen.Emit(Instruction.EQ);
+
+            string l1 = Label.Fresh();
+            gen.Emit(new IFZERO(l1));
+            e2.Compile(env, gen);
+
+            string l2 = Label.Fresh();
+            gen.Emit(new GOTO(l2));
+            e3.Compile(env, gen);
+
+
+            //throw new NotSupportedException("This functionality will be provided at a later moment.");
         }
     }
 
@@ -502,10 +534,14 @@ namespace Expressions {
         }
 
         public override void Compile(CEnv env, Generator gen) {
-            //arg.Compile (env, gen);
-            //String fLabel = env.getFunctionLabel(fName);
-            //gen.Emit(new CALL(1, fLabel));
-            throw new NotSupportedException("This functionality will be provided at a later moment.");
+            int argCount = 0;
+            foreach(var expression in expressions) {
+                expression.Compile(env, gen);
+                argCount++;
+            }
+            String fLabel = env.getFunctionLabel(fName);
+            gen.Emit(new CALL(argCount, fLabel));
+            //throw new NotSupportedException("This functionality will be provided at a later moment.");
         }
     }
 
