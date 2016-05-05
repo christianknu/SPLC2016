@@ -214,3 +214,5 @@ ModelManifest.xml
 
 
 *.exe
+*.csproj
+*.sln
