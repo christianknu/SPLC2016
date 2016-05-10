@@ -163,7 +163,7 @@ public Program program;
 		while (la.kind == 10) {
 			AndOp(out op);
 			BoolTerm(out e2);
-			e = new BinOp(op, e, e2); Console.WriteLine("Operator: " + op); 
+			e = new BinOp(op, e, e2); 
 		}
 	}
 
@@ -305,7 +305,7 @@ public Program program;
 		} else if (la.kind == 2) {
 			Get();
 			e = new Constant(Convert.ToInt32(t.val),
-			                Type.intType); Console.WriteLine("Number" + e); 
+			                Type.intType); 
 		} else if (la.kind == 25) {
 			Get();
 			Factor(out e1);

@@ -127,7 +127,7 @@ namespace Expressions {
             int numOfFormArgs = 0;
             foreach(var formArg in formArgs) {
                 env.DeclareLocal(formArg.Fst);
-                gen.Label(env.getFunctionLabel(fName));
+                gen.Emit(new CSTI(formArg.Snd));
                 numOfFormArgs++;
             }
 
@@ -378,20 +378,16 @@ namespace Expressions {
         }
 
         public override void Compile(CEnv env, Generator gen) {
-            cond.Compile(env, gen);
-
             string l1 = Label.Fresh();
-            gen.Emit(new IFZERO(l1));
-            
             string l2 = Label.Fresh();
-            gen.Emit(new GOTO(l2));
-
-
-            gen.Label(l1);
+            
+            cond.Compile(env, gen);
+            gen.Emit(new IFZERO(l1));
             e2.Compile(env, gen);
-
-            gen.Label(l2);
+            gen.Emit(new GOTO(l2));
+            gen.Label(l1);
             e3.Compile(env, gen);
+            gen.Label(l2);
         }
     }
 
@@ -430,7 +426,14 @@ namespace Expressions {
         }
 
         public override void Compile(CEnv env, Generator gen) {
-            throw new NotSupportedException("This functionality will be provided at a later moment.");
+            env.DeclareLocal(this.varName);
+            
+            e1.Compile(env, gen);
+            
+            e2.Compile(env,gen);
+            gen.Emit(Instruction.SWAP);
+            gen.Emit(new INCSP(-1));
+            env.PopEnv();
         }
     }
 
@@ -687,7 +690,7 @@ namespace Expressions {
         public void PopTemporary() {
             String s = locals.Pop();
             if (s != "_ temporary _")
-            throw new Exception("Internal problem: popping non-temporary");
+                throw new Exception("Internal problem: popping non-temporary");
         }
 
         public void CompileVariable(Generator gen, String name) {
@@ -698,271 +701,271 @@ namespace Expressions {
                     gen.Emit(new CSTI(offset));
                     gen.Emit(Instruction.SUB);
                     return;
-                    } else
-                    offset++;
-                }
-                throw new Exception("Undeclared variable: " + name);
+                } else
+                offset++;
             }
-
-            public String getFunctionLabel(String funName) {
-                if(labelMap.ContainsKey(funName))
-                return labelMap[funName];
-                else
-                throw new Exception("Internal error: Undefined function " + funName);
-            }
+            throw new Exception("Undeclared variable: " + name);
         }
 
-        // Exceptions
-
-        class TypeException : Exception {
-            public TypeException(String msg) : base(msg) { }
-        }
-
-        // Code generation
-
-        public class Generator {
-            private readonly List<Instruction> instructions;
-
-            public Generator() {
-                instructions = new List<Instruction>();
-            }
-
-            public void Emit(Instruction instr) {
-                instructions.Add(instr);
-            }
-
-            public void Label(String label) {
-                instructions.Add(new Label(label));
-            }
-
-            public int[] ToBytecode() {
-                // Pass 1: Build mapping from labels to absolute addresses
-                Dictionary<String, int> labelMap = new Dictionary<string, int>();
-                int address = 0;
-                foreach (Instruction instr in instructions) {
-                    if (instr is Label)
-                    labelMap.Add(((Label)instr).name, address);
-                    else
-                    address += instr.Size;
-                }
-                // Pass 2: Use mapping to convert symbolic code to bytes
-                List<int> bytecode = new List<int>();
-                foreach (Instruction instr in instructions)
-                instr.ToBytecode(labelMap, bytecode);
-                return bytecode.ToArray();
-            }
-
-            public void PrintCode() {
-                int address = 0;
-                foreach (Instruction instr in instructions) {
-                    Console.WriteLine("{0,5} {1}", address, instr);
-                    address += instr.Size;
-                }
-            }
-        }
-
-        public abstract class Instruction {
-            public readonly Opcode opcode;
-            public static readonly Instruction
-            ADD = new SimpleInstruction(Opcode.ADD),
-            SUB = new SimpleInstruction(Opcode.SUB),
-            MUL = new SimpleInstruction(Opcode.MUL),
-            DIV = new SimpleInstruction(Opcode.DIV),
-            MOD = new SimpleInstruction(Opcode.MOD),
-            EQ = new SimpleInstruction(Opcode.EQ),
-            LT = new SimpleInstruction(Opcode.LT),
-            NOT = new SimpleInstruction(Opcode.NOT),
-            DUP = new SimpleInstruction(Opcode.DUP),
-            SWAP = new SimpleInstruction(Opcode.SWAP),
-            LDI = new SimpleInstruction(Opcode.LDI),
-            STI = new SimpleInstruction(Opcode.STI),
-            GETBP = new SimpleInstruction(Opcode.GETBP),
-            GETSP = new SimpleInstruction(Opcode.GETSP),
-            PRINTC = new SimpleInstruction(Opcode.PRINTC),
-            PRINTI = new SimpleInstruction(Opcode.PRINTI),
-            READ = new SimpleInstruction(Opcode.READ),
-            LDARGS = new SimpleInstruction(Opcode.LDARGS),
-            STOP = new SimpleInstruction(Opcode.STOP);
-
-            public Instruction(Opcode opcode) {
-                this.opcode = opcode;
-            }
-
-            public abstract int Size { get; }
-
-            public abstract void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode);
-
-            public override string ToString() {
-                return opcode.ToString();
-            }
-        }
-
-        public class Label : Instruction {  // Pseudo-instruction
-            public readonly String name;
-            private static int last = 0;  // For generating fresh labels
-
-            public Label(String name)
-            : base(Opcode.LABEL) {
-                this.name = name;
-            }
-
-            public override int Size {
-                get { return 0; }
-            }
-
-            public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
-                // No bytecode for a label
-            }
-
-            public static String Fresh() {
-                last++;
-                return "L" + last.ToString();
-            }
-
-            public override string ToString() {
-                return name + ":";
-            }
-        }
-
-        public class SimpleInstruction : Instruction {
-            public SimpleInstruction(Opcode opcode) : base(opcode) { }
-
-            public override int Size {
-                get { return 1; }
-            }
-
-            public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
-                bytecode.Add((int)opcode);
-            }
-
-            public override string ToString() {
-                return opcode.ToString();
-            }
-        }
-
-        public class JumpInstruction : Instruction {
-            public readonly String target;
-
-            public JumpInstruction(Opcode opcode, String target)
-            : base(opcode) {
-                this.target = target;
-            }
-
-            public override int Size {
-                get { return 2; }
-            }
-
-            public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
-                bytecode.Add((int)opcode);
-                bytecode.Add(labelMap[target]);
-            }
-
-            public override string ToString() {
-                return base.ToString() + " " + target;
-            }
-        }
-
-        public class GOTO : JumpInstruction {
-            public GOTO(String target) : base(Opcode.GOTO, target) { }
-        }
-
-        public class IFZERO : JumpInstruction {
-            public IFZERO(String target) : base(Opcode.IFZERO, target) { }
-        }
-
-        public class IFNZRO : JumpInstruction {
-            public IFNZRO(String target) : base(Opcode.IFNZRO, target) { }
-        }
-
-        public class CALL : Instruction {
-            public readonly int argCount;
-            public readonly String target;
-
-            public CALL(int argCount, String target)
-            : base(Opcode.CALL) {
-                this.argCount = argCount;
-                this.target = target;
-            }
-
-            public override int Size {
-                get { return 3; }
-            }
-
-            public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
-                bytecode.Add((int)opcode);
-                bytecode.Add(argCount);
-                bytecode.Add(labelMap[target]);
-            }
-
-            public override string ToString() {
-                return base.ToString() + " " + argCount.ToString() + " " + target;
-            }
-        }
-
-        public class TCALL : Instruction {
-            public readonly int argCount;
-            public readonly int slideBy;
-            public readonly String target;
-
-            public TCALL(int argCount, int slideBy, String target)
-            : base(Opcode.TCALL) {
-                this.argCount = argCount;
-                this.slideBy = slideBy;
-                this.target = target;
-            }
-
-            public override int Size {
-                get { return 4; }
-            }
-
-            public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
-                bytecode.Add((int)opcode);
-                bytecode.Add(argCount);
-                bytecode.Add(slideBy);
-                bytecode.Add(labelMap[target]);
-            }
-        }
-
-        public class IntArgInstr : Instruction {
-            public readonly int argument;
-
-            public IntArgInstr(Opcode opcode, int argument)
-            : base(opcode) {
-                this.argument = argument;
-            }
-
-            public override int Size {
-                get { return 2; }
-            }
-
-            public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
-                bytecode.Add((int)opcode);
-                bytecode.Add(argument);
-            }
-
-            public override string ToString() {
-                return base.ToString() + " " + argument.ToString();
-            }
-        }
-
-        public class CSTI : IntArgInstr {
-            public CSTI(int argument) : base(Opcode.CSTI, argument) { }
-        }
-
-        public class INCSP : IntArgInstr {
-            public INCSP(int argument) : base(Opcode.INCSP, argument) { }
-        }
-
-        public class RET : IntArgInstr {
-            public RET(int argument) : base(Opcode.RET, argument) { }
-        }
-
-        public enum Opcode {
-            LABEL = -1, // Unused
-            CSTI, ADD, SUB, MUL, DIV, MOD, EQ, LT, NOT,
-            DUP, SWAP, LDI, STI, GETBP, GETSP, INCSP,
-            GOTO, IFZERO, IFNZRO, CALL, TCALL, RET,
-            PRINTI, PRINTC, READ, LDARGS,
-            STOP
+        public String getFunctionLabel(String funName) {
+            if(labelMap.ContainsKey(funName))
+            return labelMap[funName];
+            else
+            throw new Exception("Internal error: Undefined function " + funName);
         }
     }
+
+    // Exceptions
+
+    class TypeException : Exception {
+        public TypeException(String msg) : base(msg) { }
+    }
+
+    // Code generation
+
+    public class Generator {
+        private readonly List<Instruction> instructions;
+
+        public Generator() {
+            instructions = new List<Instruction>();
+        }
+
+        public void Emit(Instruction instr) {
+            instructions.Add(instr);
+        }
+
+        public void Label(String label) {
+            instructions.Add(new Label(label));
+        }
+
+        public int[] ToBytecode() {
+            // Pass 1: Build mapping from labels to absolute addresses
+            Dictionary<String, int> labelMap = new Dictionary<string, int>();
+            int address = 0;
+            foreach (Instruction instr in instructions) {
+                if (instr is Label)
+                labelMap.Add(((Label)instr).name, address);
+                else
+                address += instr.Size;
+            }
+            // Pass 2: Use mapping to convert symbolic code to bytes
+            List<int> bytecode = new List<int>();
+            foreach (Instruction instr in instructions)
+            instr.ToBytecode(labelMap, bytecode);
+            return bytecode.ToArray();
+        }
+
+        public void PrintCode() {
+            int address = 0;
+            foreach (Instruction instr in instructions) {
+                Console.WriteLine("{0,5} {1}", address, instr);
+                address += instr.Size;
+            }
+        }
+    }
+
+    public abstract class Instruction {
+        public readonly Opcode opcode;
+        public static readonly Instruction
+        ADD = new SimpleInstruction(Opcode.ADD),
+        SUB = new SimpleInstruction(Opcode.SUB),
+        MUL = new SimpleInstruction(Opcode.MUL),
+        DIV = new SimpleInstruction(Opcode.DIV),
+        MOD = new SimpleInstruction(Opcode.MOD),
+        EQ = new SimpleInstruction(Opcode.EQ),
+        LT = new SimpleInstruction(Opcode.LT),
+        NOT = new SimpleInstruction(Opcode.NOT),
+        DUP = new SimpleInstruction(Opcode.DUP),
+        SWAP = new SimpleInstruction(Opcode.SWAP),
+        LDI = new SimpleInstruction(Opcode.LDI),
+        STI = new SimpleInstruction(Opcode.STI),
+        GETBP = new SimpleInstruction(Opcode.GETBP),
+        GETSP = new SimpleInstruction(Opcode.GETSP),
+        PRINTC = new SimpleInstruction(Opcode.PRINTC),
+        PRINTI = new SimpleInstruction(Opcode.PRINTI),
+        READ = new SimpleInstruction(Opcode.READ),
+        LDARGS = new SimpleInstruction(Opcode.LDARGS),
+        STOP = new SimpleInstruction(Opcode.STOP);
+
+        public Instruction(Opcode opcode) {
+            this.opcode = opcode;
+        }
+
+        public abstract int Size { get; }
+
+        public abstract void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode);
+
+        public override string ToString() {
+            return opcode.ToString();
+        }
+    }
+
+    public class Label : Instruction {  // Pseudo-instruction
+        public readonly String name;
+        private static int last = 0;  // For generating fresh labels
+
+        public Label(String name)
+        : base(Opcode.LABEL) {
+            this.name = name;
+        }
+
+        public override int Size {
+            get { return 0; }
+        }
+
+        public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
+            // No bytecode for a label
+        }
+
+        public static String Fresh() {
+            last++;
+            return "L" + last.ToString();
+        }
+
+        public override string ToString() {
+            return name + ":";
+        }
+    }
+
+    public class SimpleInstruction : Instruction {
+        public SimpleInstruction(Opcode opcode) : base(opcode) { }
+
+        public override int Size {
+            get { return 1; }
+        }
+
+        public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
+            bytecode.Add((int)opcode);
+        }
+
+        public override string ToString() {
+            return opcode.ToString();
+        }
+    }
+
+    public class JumpInstruction : Instruction {
+        public readonly String target;
+
+        public JumpInstruction(Opcode opcode, String target)
+        : base(opcode) {
+            this.target = target;
+        }
+
+        public override int Size {
+            get { return 2; }
+        }
+
+        public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
+            bytecode.Add((int)opcode);
+            bytecode.Add(labelMap[target]);
+        }
+
+        public override string ToString() {
+            return base.ToString() + " " + target;
+        }
+    }
+
+    public class GOTO : JumpInstruction {
+        public GOTO(String target) : base(Opcode.GOTO, target) { }
+    }
+
+    public class IFZERO : JumpInstruction {
+        public IFZERO(String target) : base(Opcode.IFZERO, target) { }
+    }
+
+    public class IFNZRO : JumpInstruction {
+        public IFNZRO(String target) : base(Opcode.IFNZRO, target) { }
+    }
+
+    public class CALL : Instruction {
+        public readonly int argCount;
+        public readonly String target;
+
+        public CALL(int argCount, String target)
+        : base(Opcode.CALL) {
+            this.argCount = argCount;
+            this.target = target;
+        }
+
+        public override int Size {
+            get { return 3; }
+        }
+
+        public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
+            bytecode.Add((int)opcode);
+            bytecode.Add(argCount);
+            bytecode.Add(labelMap[target]);
+        }
+
+        public override string ToString() {
+            return base.ToString() + " " + argCount.ToString() + " " + target;
+        }
+    }
+
+    public class TCALL : Instruction {
+        public readonly int argCount;
+        public readonly int slideBy;
+        public readonly String target;
+
+        public TCALL(int argCount, int slideBy, String target)
+        : base(Opcode.TCALL) {
+            this.argCount = argCount;
+            this.slideBy = slideBy;
+            this.target = target;
+        }
+
+        public override int Size {
+            get { return 4; }
+        }
+
+        public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
+            bytecode.Add((int)opcode);
+            bytecode.Add(argCount);
+            bytecode.Add(slideBy);
+            bytecode.Add(labelMap[target]);
+        }
+    }
+
+    public class IntArgInstr : Instruction {
+        public readonly int argument;
+
+        public IntArgInstr(Opcode opcode, int argument)
+        : base(opcode) {
+            this.argument = argument;
+        }
+
+        public override int Size {
+            get { return 2; }
+        }
+
+        public override void ToBytecode(Dictionary<string, int> labelMap, List<int> bytecode) {
+            bytecode.Add((int)opcode);
+            bytecode.Add(argument);
+        }
+
+        public override string ToString() {
+            return base.ToString() + " " + argument.ToString();
+        }
+    }
+
+    public class CSTI : IntArgInstr {
+        public CSTI(int argument) : base(Opcode.CSTI, argument) { }
+    }
+
+    public class INCSP : IntArgInstr {
+        public INCSP(int argument) : base(Opcode.INCSP, argument) { }
+    }
+
+    public class RET : IntArgInstr {
+        public RET(int argument) : base(Opcode.RET, argument) { }
+    }
+
+    public enum Opcode {
+        LABEL = -1, // Unused
+        CSTI, ADD, SUB, MUL, DIV, MOD, EQ, LT, NOT,
+        DUP, SWAP, LDI, STI, GETBP, GETSP, INCSP,
+        GOTO, IFZERO, IFNZRO, CALL, TCALL, RET,
+        PRINTI, PRINTC, READ, LDARGS,
+        STOP
+    }
+}
