@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Week3
+namespace Week03
 {
     public delegate void IntAction(int myInt); 
     

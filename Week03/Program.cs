@@ -1,11 +1,15 @@
 using System;
 
-namespace Week3
+namespace Week03
 {
     class Program
     {
         public static void Main()
         {
+            Console.WriteLine("Yield demo:");
+            GalaxyClass.ShowGalaxies();
+            Console.WriteLine("\n");
+            
             // Exercise 1
             Console.WriteLine("Exercise 1:");
             IntAction a = x => TestDelegate.PrintInt(x);
