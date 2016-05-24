@@ -10,6 +10,10 @@ namespace Week03
             GalaxyClass.ShowGalaxies();
             Console.WriteLine("\n");
             
+            Console.WriteLine("Delegate demo:");
+            MyDelegate.RunDelegates();
+            Console.WriteLine("\n");
+            
             // Exercise 1
             Console.WriteLine("Exercise 1:");
             IntAction a = x => TestDelegate.PrintInt(x);
@@ -32,7 +36,7 @@ namespace Week03
                 new Book("Lars Mathiassen, Andreas Munk-Madsen, Peter Axel Nielsen & Jan Stage", "Object Oriented Analysis & Design", 2000),
                 new Book("Ian Sommerville", "Software Engineering", 2016),
                 new Book("Susanna S. Epp", "Discrete Mathematics with Applications", 2011)
-                };
+            };
             
             //myBooks = GenericMethods.Filter(myBooks, x => (x.year < 2010));
             //GenericMethods.Quicksort(myBooks, (x, y) => MyComparer.BookCompare(x, y));
