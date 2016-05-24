@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Week4
+namespace Week04
 {
     public delegate bool Func<T, Boolean>(T x);
 
     class Program
     {
         public static void Main() {
-            //ProgramMain();
+            ProgramMain();
             Generics.GenericsMain();
         }
         

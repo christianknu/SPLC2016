@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Week4
+namespace Week04
 {
     public class Generics
     {
@@ -92,22 +92,16 @@ namespace Week4
         }
     }
 
-    public class Person : IEnumerable<String>
+    public class Person : IComparable<Person>
     {
         public String CPRNumber;
         public Person(String CPRNumber)
         {
             this.CPRNumber = CPRNumber;
         }
-
-        public IEnumerator<String> GetEnumerator()
+        public int CompareTo(Person other)
         {
-            throw new NotImplementedException();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
+            return string.Compare(this.CPRNumber, other.CPRNumber);
         }
     }
 

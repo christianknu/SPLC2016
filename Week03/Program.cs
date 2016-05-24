@@ -9,21 +9,21 @@ namespace Week03
             Console.WriteLine("Yield demo:");
             GalaxyClass.ShowGalaxies();
             Console.WriteLine("\n");
-            
+
             Console.WriteLine("Delegate demo:");
             MyDelegate.RunDelegates();
             Console.WriteLine("\n");
-            
+
             // Exercise 1
             Console.WriteLine("Exercise 1:");
             IntAction a = x => TestDelegate.PrintInt(x);
             a(42);
-            int[] arr = {3, 4, 14, 53, 54, 89, 11};
+            int[] arr = { 3, 4, 14, 53, 54, 89, 11 };
             TestDelegate.Perform(a, arr);
             TestDelegate.Perform(Console.WriteLine, arr);
-            TestDelegate.Perform(Console.WriteLine, 1, 4, 8, 16, 32);
+            TestDelegate.Perform(Console.WriteLine, 0, 1, 4, 8, 16, 32);
             Console.WriteLine("\n");
-            
+
             // Exercise 2
             Console.WriteLine("Exercise 2:");
             Book[] myBooks = {
@@ -37,20 +37,24 @@ namespace Week03
                 new Book("Ian Sommerville", "Software Engineering", 2016),
                 new Book("Susanna S. Epp", "Discrete Mathematics with Applications", 2011)
             };
-            
-            //myBooks = GenericMethods.Filter(myBooks, x => (x.year < 2010));
-            //GenericMethods.Quicksort(myBooks, (x, y) => MyComparer.BookCompare(x, y));
-            
-            String[] bookTitles = GenericMethods.Map<Book,String>(myBooks, x => x.title);
-            
+
+            myBooks = GenericMethods.Filter(myBooks, x => x.year < 2015);
+            GenericMethods.Quicksort(
+                myBooks, (x, y) => MyComparer.BookCompare(
+                    x, y,
+                    (bookA, bookB) => bookA.year - bookB.year,
+                    (bookA, bookB) => string.Compare(bookA.title, bookB.title),
+                    (bookA, bookB) => string.Compare(bookA.author, bookB.author)));
+                    
             foreach (var book in myBooks)
-            {
                 Console.WriteLine(book);
-            }
-            
-            foreach(var bookTitle in bookTitles){
+
+            Console.WriteLine("\n");
+
+            String[] bookTitles = GenericMethods.Map<Book, String>(myBooks, x => x.title);
+            foreach (var bookTitle in bookTitles)
                 Console.WriteLine(bookTitle);
-            }
+
             Console.WriteLine("\n");
         }
     }
