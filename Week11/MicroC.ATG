@@ -1,0 +1,295 @@
+using System.Collections.Generic;
+
+COMPILER MicroC
+
+/* Lexer and parser specification for MicroC.  Modified, corrected and
+   simplified from C.ATG "An attempt to describe a subset of C",
+   distributed with Frankie Arzu's CoCo/R for C/C++.
+
+   sestoft@itu.dk 2008-03-09
+
+   Compile with:
+     Coco -namespace MicroC MicroC.ATG
+     csc MicroC.cs Scanner.cs Parser.cs
+
+   RESTRICTIONS 
+   Only one-dimensional arrays.
+   Only void functions; no return statement.
+   No function pointers.
+   No casts.
+   ... more ...
+
+*/
+
+  // The result of the parsing process is a Program
+  public Program program;
+  
+
+  // A T2V transforms a type to a variable declaration.  Used
+  // when parsing the obnoxious C variable declarations in VarDesc
+  public delegate VarDecl T2V(Type t);
+
+CHARACTERS
+  letter   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" .
+  digit    = "0123456789" .
+  hexdigit = digit + "ABCDEFabcdef" .
+  cr  = '\r'.
+  lf  = '\n'.
+  tab = '\t'.
+
+TOKENS
+  ident = ( "_" | letter) { "_" | letter | digit } .
+  number = digit {digit}.
+  lpar   = '('.
+
+COMMENTS FROM "/*" TO "*/" 
+COMMENTS FROM "//" TO lf
+
+IGNORE cr + lf + tab
+
+PRODUCTIONS
+
+/* ---------------------------------------------------------------------- */
+/* Identifiers and numbers */
+
+Ident<out String name>
+= ident                         (. name = t.val; .)
+.
+
+Number<out int val>      
+= number                        (. val = Convert.ToInt32(t.val); .)
+.
+
+/* ---------------------------------------------------------------------- */
+/* A MicroC program consists of variable and function declarations */
+
+MicroC                          (. program = new Program(); VarDecl varDecl; .)
+= { 
+    "void" FunctionDef<program> 
+  | VarDec<out varDecl> ";"     (. program.AddVar(varDecl); .)
+  } 
+  EOF 
+.
+
+/* ---------------------------------------------------------------------- */
+/* Base types.  The bool type is MicroC only, not C. */
+
+Typ<out Type ty>                (. ty = Type.errorType; .)
+= "int"                         (. ty = Type.intType;   .)
+| "bool"                        (. ty = Type.boolType;  .)
+.
+
+/* Array types.  Only one-dimensional arrays. */
+
+ArraySize<out int? size>        (. int n; size = null; .)
+= "[" 
+     [ 
+       Number<out n>            (. size = n; .)
+     ]
+  "]" 
+.
+
+/* ---------------------------------------------------------------------- */
+/* Function definitions */
+
+FunctionDef<Program program>
+                                (. String name; Block body; 
+                                   List<VarDecl> parList = new List<VarDecl>(); 
+                                .)
+= Ident<out name>
+  "(" 
+     [ FormalParamList<parList> ] 
+  ")" 
+  BlockStmt<out body>           (. VarDecl[] parameters = parList.ToArray(); 
+                                   program.AddFun(new FunDecl(name, parameters, body));
+                                .)
+.
+
+FormalParamList<.List<VarDecl> parList.> (. VarDecl parameter; .) 
+= VarDec<out parameter>         (. parList.Add(parameter); .)  
+  { 
+    "," VarDec<out parameter>   (. parList.Add(parameter); .)
+  } 
+.
+
+/* ---------------------------------------------------------------------- */
+/* Statements */
+
+Stmt<out Statement stmt>        (. stmt = null; Block block; 
+                                   VarDecl varDecl; Expression e; .)
+= ExprStmt<out stmt>        
+| BlockStmt<out block>          (. stmt = block; .) 
+| IfStmt<out stmt>  
+| NullStmt<out stmt>
+| WhileStmt<out stmt>
+| "read" Expr<out e> ";"        (. stmt = new Read(e.MakeLvalue()); .)
+| VarDec<out varDecl> ";"       (. stmt = varDecl; .)
+.
+
+ExprStmt<out Statement stmt>    (. Expression e; .)
+= Expr<out e> ";"               (. stmt = new ExprStatement(e); .)
+.
+
+BlockStmt<out Block block>      (. Statement stmt; 
+                                   List<Statement> stmtList = new List<Statement>(); 
+                                .)
+= "{" 
+     { 
+       Stmt<out stmt>           (. stmtList.Add(stmt); .)
+     } 
+  "}"                           (. block = new Block(stmtList.ToArray()); .)
+.
+
+IfStmt<out Statement stmt>      (. Expression e; Statement s1, s2 = Block.Empty; .)
+= "if" "(" Expr<out e> ")" 
+  Stmt<out s1>
+  [ 
+     "else" Stmt<out s2> 
+  ]                             (. stmt = new IfElse(e, s1, s2); .)
+.
+
+NullStmt<out Statement stmt> 
+= ";"                           (. stmt = new Block(); .)
+.
+
+WhileStmt<out Statement stmt>   (. Expression e; Statement body; .)
+= "while" 
+  "(" Expr<out e> ")" 
+   Stmt<out body>               (. stmt = new While(e, body); .)
+.
+
+/* ---------------------------------------------------------------------- */
+/* Declaration of local or global variable or formal parameter.  
+   A VarDec is a variable declaration.  A VarDesc is a variable description, 
+   consisting of the pointer/array decorations and the variable name, but 
+   not the base type. */
+
+VarDec<out VarDecl varDecl>     (. Type ty; T2V t2v; .)
+= Typ<out ty> 
+  VarDesc<out t2v>              (. varDecl = t2v(ty); .)
+.
+
+VarDesc<out T2V t2v>            (. String name; int? size; t2v = null; .)
+= ( Ident<out name>             (. t2v = delegate(Type ty) { return new VarDecl(name, ty); }; .)
+    | "*" VarDesc<out t2v>      (. T2V outer = t2v; 
+                                   t2v = delegate(Type ty) { return outer(new PointerType(ty)); }; 
+                                .) 
+    | "(" VarDesc<out t2v> ")"    
+  ) 
+  [
+    ArraySize<out size>         (. T2V outer = t2v; 
+                                   t2v = delegate(Type ty) { return outer(new ArrayType(ty, size)); }; 
+                                .)
+  ]
+.
+
+/* ---------------------------------------------------------------------- */
+/* Expressions, based on Kernighan and Ritchie: "The C Programming Language".
+   There does not seem to be a way to make this work in an LL(1) fashion,
+   but this generates a "working" parser.  
+*/
+
+/* The assignment operator is right associative.  */
+
+Expr<out Expression e>          (. Expression rhs; e = null; .)
+= LogOrExp<out e>               
+  [ 
+    '=' Expr<out rhs>           (. e = new Assignment(e.MakeLvalue(), rhs); .)
+  ]
+  | "write" Expr<out e>         (. e = new UnOp(Operator.WriteI, e);  .)
+.
+
+LogOrExp<out Expression e>      (. Expression e2; .)
+= LogAndExp<out e>  
+  { 
+    "||" LogAndExp<out e2>      (. e = new BinOp(Operator.Or, e, e2); .) 
+  } 
+.
+
+LogAndExp<out Expression e>     (. Expression e2; .)
+= EqualExp<out e> 
+  { 
+    "&&" EqualExp<out e2>       (. e = new BinOp(Operator.And, e, e2); .)
+  }
+.
+
+EqualExp<out Expression e>      (. Expression e2; Operator op; .) 
+= RelationExp<out e> 
+  { ( "=="                      (. op = Operator.Eq; .)
+    | "!="                      (. op = Operator.Ne; .)
+    ) 
+    RelationExp<out e2>         (. e = new BinOp(op, e, e2); .)
+  } 
+.
+
+RelationExp<out Expression e>   (. Expression e2; Operator op; .)
+= AddExp<out e>    
+  { ( "<"                       (. op = Operator.Lt; .)
+    | ">"                       (. op = Operator.Gt; .)
+    | "<="                      (. op = Operator.Le; .)
+    | ">="                      (. op = Operator.Ge; .)
+    ) 
+    AddExp<out e2>              (. e = new BinOp(op, e, e2); .)
+  }
+.
+
+AddExp<out Expression e>        (. Expression e2; Operator op; .)
+= MultExp<out e>
+  { ( "+"                       (. op = Operator.Add; .) 
+    | "-"                       (. op = Operator.Sub; .)
+    ) 
+    MultExp<out e2>             (. e = new BinOp(op, e, e2); .)
+  } 
+.
+
+MultExp<out Expression e>       (. Expression e2; Operator op; .)
+= UnaryExp<out e>     
+  { ( "*"                       (. op = Operator.Mul; .)
+    | "/"                       (. op = Operator.Div; .)
+    ) 
+    UnaryExp<out e2>            (. e = new BinOp(op, e, e2); .)
+  } 
+.
+
+UnaryExp<out Expression e>      (. Expression e1; e = null; .)
+= PostFixExp<out e>
+| "+" UnaryExp<out e>
+| "-" UnaryExp<out e1>          (. e = new UnOp(Operator.Neg, e1);     .)
+| "!" UnaryExp<out e1>          (. e = new UnOp(Operator.Not, e1);     .)
+| "*" UnaryExp<out e1>          (. e = new DereferenceAccess(e1);      .)
+| "&" UnaryExp<out e1>          (. e = new AddressOf(e1.MakeLvalue()); .)
+.
+
+PostFixExp<out Expression e>    (. Expression e1; Expression[] es = new Expression[0]; .)
+= Primary<out e>
+  [ "[" 
+    Expr<out e1>                (. e = new IndexAccess(e, e1); .)
+    "]" 
+  | "(" 
+    [ ActualPars<out es> ] 
+    ")"                         (. VariableAccess varAcc = e as VariableAccess;
+                                   if (varAcc != null) 
+                                     e = new Call(varAcc.name, es); 
+                                   else
+                                     throw new Exception("Calling non-name expression");
+                                .)
+  ]
+.
+
+Primary<out Expression e>       (. String name; int n; e = null;      .)
+= Ident<out name>               (. e = new VariableAccess(name);      .)
+| Number<out n>                 (. e = new Constant(n, Type.intType); .)
+| "(" 
+  Expr<out e>
+  ")" 
+.
+
+/* Function call arguments */
+
+ActualPars<out Expression[] es> (. Expression e; List<Expression> eList = new List<Expression>(); .)
+= Expr<out e>                   (. eList.Add(e); .)
+  { 
+    "," Expr<out e>             (. eList.Add(e); .) 
+  }                             (. es = eList.ToArray(); .)
+.
+END MicroC.

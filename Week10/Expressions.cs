@@ -124,13 +124,15 @@ namespace Expressions {
         }
 
         public void Compile(Generator gen, CEnv env) {
+            int argCount = 0;
             foreach(var formArg in formArgs) {
                 env.DeclareLocal(formArg.Fst);
+                argCount++;
             }
 
             gen.Label(env.getFunctionLabel(fName));
             body.Compile(env, gen);
-            gen.Emit(new RET(1));
+            gen.Emit(new RET(argCount));
             //throw new NotSupportedException("This functionality will be provided at a later moment.");
         }
 
@@ -511,16 +513,16 @@ namespace Expressions {
         }
 
         public override int Eval(REnv env, FEnv fenv) {
-            int value = 0;
             List<int> values = new List<int>();
             foreach (var expression in expressions)
             {
                 int argValue = expression.Eval(env, fenv);
                 values.Add(argValue);
+                Console.WriteLine(argValue);
             }
             FuncDef fDef = fenv.getFunction(fName);
-            value = fDef.Eval(env, fenv, values);
-            return value;
+            var temp = fDef.Eval(env, fenv, values);
+            return temp;
         }
 
         public override void Compile(CEnv env, Generator gen) {
@@ -531,7 +533,6 @@ namespace Expressions {
             }
             String fLabel = env.getFunctionLabel(fName);
             gen.Emit(new CALL(argCount, fLabel));
-            //throw new NotSupportedException("This functionality will be provided at a later moment.");
         }
     }
 
