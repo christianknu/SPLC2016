@@ -9,6 +9,7 @@
     },
 
     "frameworks": {
-        "dnxcore50": { }
+        "dnxcore50": { },
+        "osx.10.11-x64": { }
     }
 }

@@ -124,15 +124,11 @@ namespace Expressions {
         }
 
         public void Compile(Generator gen, CEnv env) {
-            int numOfFormArgs = 0;
             foreach(var formArg in formArgs) {
                 env.DeclareLocal(formArg.Fst);
-                gen.Emit(new CSTI(formArg.Snd));
-                numOfFormArgs++;
             }
 
-            //env.DeclareLocal(formArg.Fst); // Formal argument name points to top of stack
-            //gen.Label(env.getFunctionLabel(fName));
+            gen.Label(env.getFunctionLabel(fName));
             body.Compile(env, gen);
             gen.Emit(new RET(1));
             //throw new NotSupportedException("This functionality will be provided at a later moment.");
