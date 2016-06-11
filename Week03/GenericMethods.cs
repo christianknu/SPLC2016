@@ -16,7 +16,7 @@ namespace Week03
     public delegate bool Func<T, TBoolean>(T myT);
     public delegate U Map<T, U>(T myT);
 
-    static class GenericMethods
+    public class GenericMethods<T>
     {
         private static void Qsort<T>(T[] arr, DComparer<T> cmp, int a, int b)
         {
@@ -60,7 +60,7 @@ namespace Week03
             return returnArr;
         }
 
-        public static U[] Map<T, U>(T[] arr, Map<T, U> f)
+        public static U[] Map<U>(T[] arr, Map<T, U> f)
         {
             var returnArr = new U[arr.Length];
             for (int i = 0; i < arr.Length; i++)
